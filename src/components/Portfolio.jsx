@@ -18,9 +18,9 @@ export default function Portfolio() {
         { src: img1, alt: "image01" },
         { src: img2, alt: "image02" },
         { src: img3, alt: "image03" },
-        { src: img4, alt: "image04" },
-        { src: img5, alt: "image05" },
-        { src: img6, alt: "image06" },
+        { src: img6, alt: "image04" },
+        { src: img4, alt: "image05" },
+        { src: img5, alt: "image06" },
         // Si agregaste más importaciones, añádelas al array:
         // { src: img4, alt: "Descripción de la imagen 4" },
     ];
