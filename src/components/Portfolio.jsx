@@ -2,12 +2,12 @@
 import React from "react";
 
 // IMPORTA tus imágenes aquí. Ajusta los nombres si los tuyos son distintos.
-import img1 from "../assets/images/earth.jpg";
-import img2 from "../assets/images/saturn.jpg";
-import img3 from "../assets/images/eye.jpg";
-import img4 from "../assets/images/mouth.jpg";
-import img5 from "../assets/images/elephant.jpg";
-import img6 from "../assets/images/cave.jpg";
+import img1 from "../assets/images/finn_01.jpg";
+import img2 from "../assets/images/mouth_01.jpg";
+import img3 from "../assets/images/eye_gen_01.jpg";
+import img4 from "../assets/images/elephant_01.jpg";
+import img5 from "../assets/images/rocks_01.jpg";
+import img6 from "../assets/images/finn_04.jpg";
 // Si tienes más imágenes, importa cada una:
 // import img4 from "../assets/images/imagen4.jpg";
 // etc.
