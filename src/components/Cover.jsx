@@ -36,7 +36,7 @@ export default function Portfolio() {
     // Columnas: 3 en móvil, tantas como items en escritorio
     const cols = isMobile ? 3 : items.length;
     const gap = isMobile ? '16px' : '16px';
-    const aspectRatio = isMobile ? '1/3.3' : '1/3.5';
+    const aspectRatio = isMobile ? '1/3.2' : '1/3.5';
 
     return (
         <section
