@@ -46,7 +46,7 @@ export default function ImageZoomProgressive({
                 src={src}
                 alt={alt}
                 style={{
-                    display: 'inline',
+                    display: 'block',
                     width: '100%',
                     height: '100%',
                     objectFit: 'cover',
