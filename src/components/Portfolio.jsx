@@ -29,7 +29,7 @@ export default function Portfolio() {
         <section
             id="portfolio"
             style={{
-                padding: "64px 200px",
+                padding: "32px",
                 backgroundColor: "#fafafa"
             }}
         >

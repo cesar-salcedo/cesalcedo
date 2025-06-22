@@ -1,19 +1,32 @@
 // src/components/Header.jsx
-import React from "react";
+import React, { useState, useEffect } from "react";
 
 export default function Header() {
-    // Make sure to include these Google Fonts in your index.html or import them via CSS:
-    // <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@700&family=Open+Sans:wght@400&display=swap" rel="stylesheet">
+    const [isMobile, setIsMobile] = useState(
+        typeof window !== "undefined" ? window.innerWidth < 768 : false
+    );
+    const [menuOpen, setMenuOpen] = useState(false);
+
+    // Actualiza isMobile al redimensionar
+    useEffect(() => {
+        const handleResize = () => {
+            const mobile = window.innerWidth < 768;
+            setIsMobile(mobile);
+            if (!mobile) setMenuOpen(false); // cerramos menú si salimos de móvil
+        };
+        window.addEventListener("resize", handleResize);
+        return () => window.removeEventListener("resize", handleResize);
+    }, []);
 
     const headerStyle = {
+        position: "relative",     // necesario para el nav absolute
         display: "flex",
-        justifyContent: "space-between",
         alignItems: "center",
-        padding: "20px 40px",
-        backgroundColor: "#ffffff",
+        justifyContent: "center",
+        padding: "16px 16px",
+        backgroundColor: "#fff",
         borderBottom: "1px solid #e0e0e0",
-        position: "sticky",
-        top: 0,
+        width: "100%",
         zIndex: 1000,
     };
 
@@ -28,6 +41,20 @@ export default function Header() {
     const navStyle = {
         display: "flex",
         gap: "24px",
+        marginLeft: "auto",
+    };
+
+    const mobileNavStyle = {
+        position: "absolute",
+        top: "100%",
+        right: 0,
+        backgroundColor: "#fff",
+        width: "100%",
+        boxShadow: "0 4px 8px rgba(0,0,0,0.1)",
+        display: "flex",
+        flexDirection: "column",
+        alignItems: "center",
+        padding: "16px 0",
     };
 
     const linkStyle = {
@@ -35,54 +62,73 @@ export default function Header() {
         fontSize: "1rem",
         color: "#555",
         textDecoration: "none",
-        padding: "4px 8px",
-        transition: "color 0.2s ease",
+        padding: "8px 16px",
+        width: "100%",
+        textAlign: "center",
+        transition: "background-color 0.2s ease, color 0.2s ease",
     };
 
-    const linkHover = {
-        color: "#000",
+    const buttonStyle = {
+        marginLeft: "auto",
+        background: "none",
+        border: "none",
+        fontSize: "1.8rem",
+        cursor: "pointer",
     };
+
+    const links = [
+        { href: "#reel", label: "Demo Reel" },
+        { href: "#portfolio", label: "Portfolio" },
+        { href: "#about", label: "About" },
+        { href: "#contact", label: "Contact" },
+    ];
 
     return (
         <header style={headerStyle}>
-            {/* Replace "César Salcedo García" with your preferred display name */}
             <a href="#home" style={nameStyle}>
                 CESAR SALCEDO
             </a>
-            <nav style={navStyle}>
-                <a
-                    href="#reel"
-                    style={linkStyle}
-                    onMouseEnter={(e) => (e.currentTarget.style.color = linkHover.color)}
-                    onMouseLeave={(e) => (e.currentTarget.style.color = linkStyle.color)}
+
+            {isMobile ? (
+                <button
+                    style={buttonStyle}
+                    onClick={() => setMenuOpen((o) => !o)}
+                    aria-label="Toggle menu"
                 >
-                    Demo Reel
-                </a>
-                <a
-                    href="#portfolio"
-                    style={linkStyle}
-                    onMouseEnter={(e) => (e.currentTarget.style.color = linkHover.color)}
-                    onMouseLeave={(e) => (e.currentTarget.style.color = linkStyle.color)}
-                >
-                    Portfolio
-                </a>
-                <a
-                    href="#about"
-                    style={linkStyle}
-                    onMouseEnter={(e) => (e.currentTarget.style.color = linkHover.color)}
-                    onMouseLeave={(e) => (e.currentTarget.style.color = linkStyle.color)}
-                >
-                    About
-                </a>
-                <a
-                    href="#contact"
-                    style={linkStyle}
-                    onMouseEnter={(e) => (e.currentTarget.style.color = linkHover.color)}
-                    onMouseLeave={(e) => (e.currentTarget.style.color = linkStyle.color)}
-                >
-                    Contact
-                </a>
-            </nav>
+                    ☰
+                </button>
+            ) : (
+                <nav style={navStyle}>
+                    {links.map(({ href, label }) => (
+                        <a
+                            key={href}
+                            href={href}
+                            style={linkStyle}
+                            onMouseEnter={(e) => (e.currentTarget.style.color = "#000")}
+                            onMouseLeave={(e) => (e.currentTarget.style.color = "#555")}
+                        >
+                            {label}
+                        </a>
+                    ))}
+                </nav>
+            )}
+
+            {isMobile && menuOpen && (
+                <nav style={mobileNavStyle}>
+                    {links.map(({ href, label }) => (
+                        <a
+                            key={href}
+                            href={href}
+                            style={linkStyle}
+                            onClick={() => setMenuOpen(false)}     // cierra al clickar
+                            onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = "#f0f0f0")}
+                            onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = "transparent")}
+                        >
+                            {label}
+                        </a>
+                    ))}
+                </nav>
+            )}
         </header>
     );
 }
