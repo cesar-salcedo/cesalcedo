@@ -16,10 +16,10 @@ export default function Reel() {
                 style={{
                     position: "relative",
                     width: "100%",
-                    maxWidth: "1280px",
+
                     margin: "20px auto",
                     aspectRatio: "16/9",          // <— hace que el contenedor siempre respete 16:9
-                    borderRadius: "8px",
+                    borderRadius: "0px",
                     overflow: "hidden",
                 }}
             >

@@ -23,6 +23,8 @@ export default function Header() {
         display: "flex",
         alignItems: "center",
         justifyContent: "center",
+
+
         padding: "16px 16px",
         backgroundColor: "#fff",
         borderBottom: "1px solid #e0e0e0",
@@ -40,6 +42,7 @@ export default function Header() {
 
     const navStyle = {
         display: "flex",
+        alignItems: "center",
         gap: "24px",
         marginLeft: "auto",
     };
@@ -77,7 +80,6 @@ export default function Header() {
     };
 
     const links = [
-        { href: "#reel", label: "Demo Reel" },
         { href: "#portfolio", label: "Portfolio" },
         { href: "#about", label: "About" },
         { href: "#contact", label: "Contact" },

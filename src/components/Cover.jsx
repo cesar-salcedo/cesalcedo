@@ -1,3 +1,4 @@
+// Portfolio.jsx
 import React, { useState, useEffect } from 'react';
 import ImageZoomProgressive from './ImageZoomProgressive.jsx';
 import img1 from "../assets/images/finn_01.jpg";
@@ -9,7 +10,7 @@ import img6 from "../assets/images/finn_04.jpg";
 import img7 from "../assets/images/rocks_10.jpg";
 
 export default function Portfolio() {
-    const items = [
+    const allItems = [
         { alt: 'Stormtrooper', src: img1, pos: 'center center' },
         { alt: 'Human Mouth', src: img2, pos: '61% center' },
         { alt: 'Gas Planet', src: img3, pos: '77% center' },
@@ -18,35 +19,44 @@ export default function Portfolio() {
         { alt: 'Eye Gen', src: img6, pos: 'center center' },
         { alt: 'Rock', src: img7, pos: 'center center' },
     ];
-    // Estado para el ancho de viewport
-    const [width, setWidth] = useState(typeof window !== 'undefined' ? window.innerWidth : 1024);
 
+    // Detectamos ancho de pantalla
+    const [width, setWidth] = useState(
+        typeof window !== 'undefined' ? window.innerWidth : 1024
+    );
     useEffect(() => {
         const onResize = () => setWidth(window.innerWidth);
         window.addEventListener('resize', onResize);
         return () => window.removeEventListener('resize', onResize);
     }, []);
 
-    // Decide el gap según el ancho (puedes ajustar el umbral)
-    const gridGap = width < 600 ? '4px' : '16px';
+    const isMobile = width < 600;
+    // En móvil sólo mostramos las primeras 6 imágenes
+    const items = isMobile ? allItems.slice(0, 6) : allItems;
+    // Columnas: 3 en móvil, tantas como items en escritorio
+    const cols = isMobile ? 3 : items.length;
+    const gap = isMobile ? '16px' : '16px';
+    const aspectRatio = isMobile ? '1/3.3' : '1/3.5';
 
     return (
-        <section style={{
-            display: 'grid',
-            gridTemplateColumns: `repeat(${items.length}, 1fr)`, // tantas columnas como imágenes
-            gap: gridGap,            // margen entre columnas
-            padding: '16px',        // margen interno al contenedor
-            width: '100%',
-            maxHeight: '100vh',     // ya no fuerza 100vh, sólo como tope
-            overflowX: 'auto',      // scroll horizontal si cabe más ancho
-            overflowY: 'hidden',    // nada de scroll vertical
-        }}>
+        <section
+            style={{
+                display: 'grid',
+                gridTemplateColumns: `repeat(${cols}, 1fr)`,
+                gap,
+                padding: '16px',
+                width: '100%',
+                // En móvil scroll vertical si hace falta, en escritorio horizontal
+                overflowX: isMobile ? 'hidden' : 'auto',
+                overflowY: isMobile ? 'auto' : 'hidden',
+            }}
+        >
             {items.map(({ alt, src, pos }, idx) => (
                 <div
                     key={idx}
                     style={{
                         width: '100%',
-                        aspectRatio: '1 / 3.5', // fija relación ancho/alto para responsividad
+                        aspectRatio: aspectRatio,
                         overflow: 'hidden',
                     }}
                 >

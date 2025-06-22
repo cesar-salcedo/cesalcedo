@@ -12,8 +12,6 @@ function App() {
     <div style={{
       display: "flex",
       flexDirection: "column",
-
-
       fontFamily: "Arial, sans-serif",
       color: "#355",
       boxSizing: "border-box",
@@ -21,7 +19,6 @@ function App() {
       <Header />
       <Cover />
       <Reel />
-      <Portfolio />
       <About />
       <Contact />
     </div>
