@@ -23,11 +23,8 @@ export default function Portfolio() {
         <div style={{
             marginTop: "32px"
         }}>
-            <h1 style={{
-                textAlign: "center",
-                margin: "32px",
-                color: "black"
-            }}>PORTFOLIO</h1>
+            <h2 style={{ textAlign: "center" }}>Portfolio</h2>
+            <hr style={{ width: "100%", border: "none", borderTop: "1px solid #ccc" }} />
 
             <TypeA
                 title={"Human Mouth"}
