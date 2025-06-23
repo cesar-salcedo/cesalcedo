@@ -90,7 +90,7 @@ export default function Portfolio() {
                     <ImageZoomProgressive
                         src={src}
                         alt={alt}
-                        maxScale={1.4}
+                        maxScale={1.8}
                         objectPosition={pos}
                     />
                 </motion.div>
