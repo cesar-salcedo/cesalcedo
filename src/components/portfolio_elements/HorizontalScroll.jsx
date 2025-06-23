@@ -58,8 +58,13 @@ const HorizontalScrollGallery = ({ images }) => {
     return (
         <div
             ref={containerRef}
-            style={{ height: `${containerHeight}px`, position: 'relative' }}
+            style={{
+                height: `${containerHeight}px`,
+                position: 'relative',
+                backgroundColor: '#efefef'
+            }}
         >
+
             <div
                 style={{
                     position: 'sticky',
@@ -85,7 +90,7 @@ const HorizontalScrollGallery = ({ images }) => {
                             alt={`slide-${idx}`}
                             style={{
                                 flexShrink: 0,
-                                width: '100%',
+                                width: '100vw',
                                 height: '100vh',
                                 objectFit: 'cover',
                             }}

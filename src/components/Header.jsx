@@ -34,7 +34,7 @@ export default function Header() {
 
     const nameStyle = {
         fontFamily: "'Montserrat', sans-serif",
-        fontSize: "1.8rem",
+        fontSize: "1.7rem",
         fontWeight: 700,
         color: "#333",
         textDecoration: "none",
