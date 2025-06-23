@@ -24,7 +24,7 @@ export default function Contact() {
                 backgroundColor: "#ffffff"
             }}
         >
-            <h2 style={{ textAlign: "center" }}>Contact Me</h2>
+            <h2 style={{ textAlign: "center" }}>Say hello!</h2>
             <form
                 onSubmit={handleSubmit}
                 style={{

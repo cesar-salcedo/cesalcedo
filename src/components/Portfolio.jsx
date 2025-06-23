@@ -8,7 +8,7 @@ import img2 from '../assets/images/mouth_02.jpg';
 import img3 from '../assets/images/mouth_03.jpg';
 import img4 from '../assets/images/mouth_04.jpg';
 import img5 from '../assets/images/mouth_05.jpg';
-import img6 from '../assets/images/solar_system_01.jpg';
+import img6 from '../assets/images/solar_system_03.jpg';
 import img7 from '../assets/images/solar_system_02.jpg';
 //import img8 from '../assets/images/elephant_01.jpg';
 //import img9 from '../assets/images/elephant_02.jpg';

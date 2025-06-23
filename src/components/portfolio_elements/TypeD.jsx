@@ -16,7 +16,7 @@ export default function TipoD({ title, description, profit, src, alt = 'GIF' }) 
     }, []);
 
     return (
-        <div style={{ marginTop: '32px' }}>
+        <div style={{ marginTop: '128px' }}>
             {/* Título y descripciones */}
             <h2 style={{ textAlign: 'center', color: '#25a9f0', marginBottom: '8px' }}>
                 {title}
@@ -37,21 +37,19 @@ export default function TipoD({ title, description, profit, src, alt = 'GIF' }) 
                 />
             ) : (
                 <div style={{ overflow: 'hidden', width: '100%', position: 'relative' }}>
-                    {/* Ajusta padding-top para la proporción deseada */}
-                    <div style={{ paddingTop: '56.25%', position: 'relative' }}>
-                        <img
-                            src={src}
-                            alt={alt}
-                            style={{
-                                position: 'absolute',
-                                top: 0,
-                                left: '50%',
-                                height: '100%',
-                                transform: 'translateX(-50%)',
-                                objectFit: 'cover',
-                            }}
-                        />
-                    </div>
+
+                    <img
+                        src={src}
+                        alt={alt}
+                        style={{
+
+
+                            left: '50%',
+                            height: '100%',
+                            transform: 'translateX(-50%)',
+
+                        }}
+                    />
                 </div>
             )}
         </div>

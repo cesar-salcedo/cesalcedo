@@ -31,7 +31,7 @@ export default function TypeC({
             {description && (
                 <h4
                     style={{
-                        marginTop: "8px",
+                        marginTop: "16px",
                         textAlign: "center",
                         marginBottom: "16px",
                     }}

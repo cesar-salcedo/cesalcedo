@@ -6,7 +6,7 @@ import HorizontalScroll from './HorizontalScroll.jsx';
 export default function TypeA({ title, description, profit, images }) {
     return (
         <div style={{
-            marginTop: "64px"
+            marginTop: "128px"
         }}>
             <h2 style={{
 
