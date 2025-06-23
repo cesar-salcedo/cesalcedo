@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 
-export default function TypeA({ title, description, profit, imageH, imageW }) {
+export default function TypeB({ title, description, profit, imageH, imageW }) {
     // Estado para detectar si estamos en escritorio según el ancho de la ventana
     const [isDesktop, setIsDesktop] = useState(
         typeof window !== 'undefined' ? window.innerWidth >= 768 : false

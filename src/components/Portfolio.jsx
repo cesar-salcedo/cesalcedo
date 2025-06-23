@@ -1,7 +1,7 @@
 import React from 'react';
 import TypeA from './portfolio_elements/TypeA';
 import TypeB from './portfolio_elements/TypeB';
-import TypeC from './portfolio_elements/TypeC';
+import TypeD from './portfolio_elements/TypeD';
 
 import img1 from '../assets/images/mouth_01.jpg';
 import img2 from '../assets/images/mouth_02.jpg';
@@ -10,11 +10,12 @@ import img4 from '../assets/images/mouth_04.jpg';
 import img5 from '../assets/images/mouth_05.jpg';
 import img6 from '../assets/images/solar_system_01.jpg';
 import img7 from '../assets/images/solar_system_02.jpg';
-//import img8 from '../assets/images/elephant_01.jpg';
-//import img9 from '../assets/images/elephant_02.jpg';
-//import img10 from '../assets/images/elephant_03.jpg';
-//import img11 from '../assets/images/elephant_04.jpg';
-//import img12 from '../assets/images/elephant_05.jpg';
+import img8 from '../assets/images/elephant_01.jpg';
+import img9 from '../assets/images/elephant_02.jpg';
+import img10 from '../assets/images/elephant_03.jpg';
+import img11 from '../assets/images/elephant_04.jpg';
+import img12 from '../assets/images/elephant_05.jpg';
+import gif01 from '../assets/images/elephant_07.webp';
 
 
 export default function Portfolio() {
@@ -42,14 +43,12 @@ export default function Portfolio() {
                 imageH={img7}
                 imageW={img6}
             />
-            <TypeC
+            <TypeD
                 title={"African Elephant"}
                 description={"Game-ready 3D model with 8K PBR textures, clean UVs, and a fully rigged skeleton with IK/FK chains. Balanced for real-time performance and visual fidelity across VR, AR, games, and cinematics."}
                 profit={"$8.000 profit. +50 sales"}
-                embedUrl={"https://sketchfab.com/models/78ce17c0b1f84563967bfbd3fc68d85c/embed"}
+                src={gif01}
             />
-
-
 
 
             {/* Puedes repetir para más proyectos */}
