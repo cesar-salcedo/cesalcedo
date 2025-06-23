@@ -1,30 +1,48 @@
-// HorizontalScrollGallery.jsx
-import React, { useRef, useEffect, useState } from 'react';
+import React, { useRef, useEffect, useState, useCallback } from "react";
+
+/**
+ * HorizontalScrollGallery
+ * -----------------------
+ * • Desktop (≥ 1024 px): every slide **after the first** is cropped to 50 vw so
+ *   the horizontal journey is halved ⇢ faster progression.
+ * • Mobile/tablet: original full-width behaviour.
+ * • NEW: Cropped slides now display the **central portion** of each image.
+ */
+
+const DESKTOP_BREAKPOINT = 1024; // px
 
 const HorizontalScrollGallery = ({ images }) => {
     const containerRef = useRef(null);
     const trackRef = useRef(null);
 
-    // Estado para almacenar la altura del contenedor wrapper
     const [containerHeight, setContainerHeight] = useState(0);
-    // Estado para almacenar el máximo desplazamiento horizontal (scrollWidth)
     const [maxScrollX, setMaxScrollX] = useState(0);
+    const [isDesktop, setIsDesktop] = useState(
+        typeof window !== "undefined" && window.innerWidth >= DESKTOP_BREAKPOINT
+    );
 
+    /* ---------------------------------------------------------------------- */
+    /*  RESIZE & DIMENSIONS                                                   */
+    /* ---------------------------------------------------------------------- */
+    const handleResize = useCallback(() => {
+        setIsDesktop(window.innerWidth >= DESKTOP_BREAKPOINT);
+    }, []);
+
+    const updateDimensions = useCallback(() => {
+        if (!trackRef.current) return;
+
+        const scrollWidth = trackRef.current.scrollWidth - window.innerWidth;
+        setMaxScrollX(scrollWidth);
+        setContainerHeight(scrollWidth + window.innerHeight);
+    }, []);
+
+    /* ---------------------------------------------------------------------- */
+    /*  SCROLL SYNC                                                           */
+    /* ---------------------------------------------------------------------- */
     useEffect(() => {
-        const updateDimensions = () => {
-            if (!trackRef.current) return;
-
-            // Ancho total de la pista menos la anchura de la ventana
-            const scrollWidth = trackRef.current.scrollWidth - window.innerWidth;
-            setMaxScrollX(scrollWidth);
-
-            // Altura del contenedor = desplazamiento horizontal + alto de viewport
-            setContainerHeight(scrollWidth + window.innerHeight);
-        };
-
-        // Inicial y en resize
         updateDimensions();
-        window.addEventListener('resize', updateDimensions);
+        window.addEventListener("resize", handleResize);
+        window.addEventListener("resize", updateDimensions);
 
         const handleScroll = () => {
             if (!containerRef.current || !trackRef.current) return;
@@ -32,70 +50,79 @@ const HorizontalScrollGallery = ({ images }) => {
             const scrollY = window.scrollY;
             const containerTop = containerRef.current.offsetTop;
 
-            // Calculamos cuánto hemos scrollado dentro de este contenedor
             const scrollInSection = Math.min(
                 Math.max(scrollY - containerTop, 0),
                 maxScrollX
             );
 
-            // Aplicamos la traslación horizontal inversa
             trackRef.current.style.transform = `translateX(-${scrollInSection}px)`;
         };
 
-        // Usamos scroll normal (compatible con móvil)
-        window.addEventListener('scroll', handleScroll, { passive: true });
+        window.addEventListener("scroll", handleScroll, { passive: true });
 
         return () => {
-            window.removeEventListener('resize', updateDimensions);
-            window.removeEventListener('scroll', handleScroll);
+            window.removeEventListener("resize", handleResize);
+            window.removeEventListener("resize", updateDimensions);
+            window.removeEventListener("scroll", handleScroll);
         };
-    }, [maxScrollX]);
+    }, [handleResize, updateDimensions, maxScrollX]);
 
-    if (!images || images.length === 0) {
-        return null;
-    }
+    if (!images?.length) return null;
 
+    /* ---------------------------------------------------------------------- */
+    /*  RENDER                                                                */
+    /* ---------------------------------------------------------------------- */
     return (
         <div
             ref={containerRef}
             style={{
                 height: `${containerHeight}px`,
-                position: 'relative',
-                backgroundColor: '#efefef'
+                position: "relative",
+                backgroundColor: "#efefef",
             }}
         >
-
             <div
                 style={{
-                    position: 'sticky',
+                    position: "sticky",
                     top: 0,
                     left: 0,
-                    width: '100%',
-                    height: '100vh',
-                    overflow: 'hidden',
+                    width: "100%",
+                    height: "100vh",
+                    overflow: "hidden",
                 }}
             >
                 <div
                     ref={trackRef}
-                    style={{
-                        display: 'flex',
-                        height: '100%',
-                        willChange: 'transform',
-                    }}
+                    style={{ display: "flex", height: "100%", willChange: "transform" }}
                 >
-                    {images.map((src, idx) => (
-                        <img
-                            key={idx}
-                            src={src}
-                            alt={`slide-${idx}`}
-                            style={{
-                                flexShrink: 0,
-                                width: '100vw',
-                                height: '100vh',
-                                objectFit: 'cover',
-                            }}
-                        />
-                    ))}
+                    {images.map((src, idx) => {
+                        const shouldCrop = isDesktop && idx > 0;
+
+                        return (
+                            <div
+                                key={idx}
+                                style={{
+                                    flexShrink: 0,
+                                    width: shouldCrop ? "50vw" : "100vw",
+                                    height: "100vh",
+                                    overflow: "hidden",
+                                    display: "flex",
+                                    justifyContent: "center",
+                                }}
+                            >
+                                <img
+                                    src={src}
+                                    alt={`slide-${idx}`}
+                                    style={{
+                                        width: shouldCrop ? "100vw" : "100%", // ensures central crop
+                                        height: "100%",
+                                        objectFit: "cover",
+                                        objectPosition: "center center", // <-- centring enforced
+                                    }}
+                                />
+                            </div>
+                        );
+                    })}
                 </div>
             </div>
         </div>

@@ -1,9 +1,25 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 
-export default function TypeB({ title, description, profit, imageH, imageW }) {
+export default function TypeA({ title, description, profit, imageH, imageW }) {
+    // Estado para detectar si estamos en escritorio según el ancho de la ventana
+    const [isDesktop, setIsDesktop] = useState(
+        typeof window !== 'undefined' ? window.innerWidth >= 768 : false
+    );
+
+    useEffect(() => {
+        const handleResize = () => {
+            setIsDesktop(window.innerWidth >= 768);
+        };
+        window.addEventListener('resize', handleResize);
+        return () => window.removeEventListener('resize', handleResize);
+    }, []);
+
+    // Seleccionamos la imagen según el tamaño de pantalla
+    const src = isDesktop ? imageW : imageH;
+
     return (
         <div style={{
-            marginTop: '64px'
+            marginTop: '32px'
         }}>
             <h2 style={{
                 textAlign: 'center',
@@ -20,20 +36,17 @@ export default function TypeB({ title, description, profit, imageH, imageW }) {
                 marginBottom: '16px'
             }}>{profit}</h4>
 
-            {/* Responsive image: mobile uses imageH, desktop uses imageW */}
-            <picture>
-                <source media="(min-width: 76px)" srcSet={imageW} />
-                <img
-                    src={imageH}
-                    alt={title}
-                    style={{
-                        display: 'block',
-                        margin: '0 auto',
-                        width: '100%',
-                        height: 'auto'
-                    }}
-                />
-            </picture>
+            {/* Imagen responsiva: cambia según isDesktop */}
+            <img
+                src={src}
+                alt={title}
+                style={{
+                    display: 'block',
+                    margin: '0 auto',
+                    width: '100%',
+                    height: 'auto'
+                }}
+            />
         </div>
     );
 }
