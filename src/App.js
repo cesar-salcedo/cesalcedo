@@ -2,7 +2,7 @@
 import React from "react";
 import Header from "./components/Header";
 import Cover from "./components/Cover";
-
+import Portfolio from "./components/Portfolio";
 import About from "./components/About";
 import Contact from "./components/Contact";
 
@@ -17,7 +17,7 @@ function App() {
     }}>
       <Header />
       <Cover />
-
+      <Portfolio />
       <About />
       <Contact />
     </div>
