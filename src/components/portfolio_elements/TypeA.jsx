@@ -11,7 +11,7 @@ export default function TypeA({ title, description, profit, images }) {
             <h2 style={{
 
                 textAlign: "center",
-                color: "#25a9f0"
+
             }}>{title}</h2>
             <h4 style={{
                 marginTop: "8px",

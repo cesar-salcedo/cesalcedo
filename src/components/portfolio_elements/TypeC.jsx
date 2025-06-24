@@ -26,7 +26,7 @@ export default function TypeC({
     return (
         <div style={{ marginTop: "64px" }}>
             {title && (
-                <h2 style={{ textAlign: "center", color: "#25a9f0" }}>{title}</h2>
+                <h2 style={{ textAlign: "center" }}>{title}</h2>
             )}
             {description && (
                 <h4

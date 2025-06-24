@@ -1,83 +1,54 @@
 import React, { useRef, useEffect, useState, useCallback } from "react";
 
-/**
- * HorizontalScrollGallery
- * -----------------------
- * • Desktop (≥ 1024 px): every slide **after the first** is cropped to 50 vw so
- *   the horizontal journey is halved ⇢ faster progression.
- * • Mobile/tablet: original full-width behaviour.
- * • NEW: Cropped slides now display the **central portion** of each image.
- */
-
-const DESKTOP_BREAKPOINT = 1024; // px
-
 const HorizontalScrollGallery = ({ images }) => {
+    const SCROLL_DIVISOR = 3; // entre más alto, más rápido va el scroll
     const containerRef = useRef(null);
-    const trackRef = useRef(null);
-
+    const [viewportWidth, setViewportWidth] = useState(window.innerWidth);
+    const [scrollX, setScrollX] = useState(0);
     const [containerHeight, setContainerHeight] = useState(0);
-    const [maxScrollX, setMaxScrollX] = useState(0);
-    const [isDesktop, setIsDesktop] = useState(
-        typeof window !== "undefined" && window.innerWidth >= DESKTOP_BREAKPOINT
-    );
 
-    /* ---------------------------------------------------------------------- */
-    /*  RESIZE & DIMENSIONS                                                   */
-    /* ---------------------------------------------------------------------- */
-    const handleResize = useCallback(() => {
-        setIsDesktop(window.innerWidth >= DESKTOP_BREAKPOINT);
-    }, []);
+    const updateDims = useCallback(() => {
+        const vw = window.innerWidth;
+        setViewportWidth(vw);
 
-    const updateDimensions = useCallback(() => {
-        if (!trackRef.current) return;
+        const perSlide = vw / SCROLL_DIVISOR;
+        const animCount = Math.max(images.length - 1, 0);
+        const totalScrollX = animCount * perSlide;
+        setContainerHeight(totalScrollX + window.innerHeight);
+    }, [images.length]);
 
-        const scrollWidth = trackRef.current.scrollWidth - window.innerWidth;
-        setMaxScrollX(scrollWidth);
-        setContainerHeight(scrollWidth + window.innerHeight);
-    }, []);
-
-    /* ---------------------------------------------------------------------- */
-    /*  SCROLL SYNC                                                           */
-    /* ---------------------------------------------------------------------- */
     useEffect(() => {
-        updateDimensions();
-        window.addEventListener("resize", handleResize);
-        window.addEventListener("resize", updateDimensions);
+        updateDims();
+        window.addEventListener("resize", updateDims);
+        return () => window.removeEventListener("resize", updateDims);
+    }, [updateDims]);
 
-        const handleScroll = () => {
-            if (!containerRef.current || !trackRef.current) return;
+    useEffect(() => {
+        const onScroll = () => {
+            if (!containerRef.current) return;
+            const top = containerRef.current.offsetTop;
+            const raw = window.scrollY - top;
 
-            const scrollY = window.scrollY;
-            const containerTop = containerRef.current.offsetTop;
+            const perSlide = viewportWidth / SCROLL_DIVISOR;
+            const animCount = Math.max(images.length - 1, 0);
+            const max = animCount * perSlide;
 
-            const scrollInSection = Math.min(
-                Math.max(scrollY - containerTop, 0),
-                maxScrollX
-            );
-
-            trackRef.current.style.transform = `translateX(-${scrollInSection}px)`;
+            setScrollX(Math.min(Math.max(raw, 0), max));
         };
 
-        window.addEventListener("scroll", handleScroll, { passive: true });
-
-        return () => {
-            window.removeEventListener("resize", handleResize);
-            window.removeEventListener("resize", updateDimensions);
-            window.removeEventListener("scroll", handleScroll);
-        };
-    }, [handleResize, updateDimensions, maxScrollX]);
+        window.addEventListener("scroll", onScroll, { passive: true });
+        onScroll();
+        return () => window.removeEventListener("scroll", onScroll);
+    }, [images.length, viewportWidth]);
 
     if (!images?.length) return null;
 
-    /* ---------------------------------------------------------------------- */
-    /*  RENDER                                                                */
-    /* ---------------------------------------------------------------------- */
     return (
         <div
             ref={containerRef}
             style={{
-                height: `${containerHeight}px`,
                 position: "relative",
+                height: `${containerHeight}px`,
                 backgroundColor: "#efefef",
             }}
         >
@@ -91,39 +62,81 @@ const HorizontalScrollGallery = ({ images }) => {
                     overflow: "hidden",
                 }}
             >
-                <div
-                    ref={trackRef}
-                    style={{ display: "flex", height: "100%", willChange: "transform" }}
-                >
-                    {images.map((src, idx) => {
-                        const shouldCrop = isDesktop && idx > 0;
-
+                {images.map((src, idx) => {
+                    // Primera imagen estática
+                    if (idx === 0) {
                         return (
                             <div
                                 key={idx}
                                 style={{
-                                    flexShrink: 0,
-                                    width: shouldCrop ? "50vw" : "100vw",
+                                    position: "absolute",
+                                    top: 0,
+                                    left: 0,
+                                    width: "100vw",
                                     height: "100vh",
                                     overflow: "hidden",
-                                    display: "flex",
-                                    justifyContent: "center",
+                                    zIndex: 0,
+                                    transform: "translateX(0)",
                                 }}
                             >
                                 <img
                                     src={src}
-                                    alt={`slide-${idx}`}
+                                    alt="slide-static"
                                     style={{
-                                        width: shouldCrop ? "100vw" : "100%", // ensures central crop
+                                        width: "100%",
                                         height: "100%",
                                         objectFit: "cover",
-                                        objectPosition: "center center", // <-- centring enforced
+                                        objectPosition: "center center",
                                     }}
                                 />
                             </div>
                         );
-                    })}
-                </div>
+                    }
+
+                    // Imágenes animadas desde la segunda
+                    const perSlide = viewportWidth / SCROLL_DIVISOR;
+                    const animIndex = idx - 1;
+                    const start = animIndex * perSlide;
+                    const end = (animIndex + 1) * perSlide;
+
+                    let x;
+                    if (scrollX <= start) {
+                        x = viewportWidth;
+                    } else if (scrollX >= end) {
+                        x = 0;
+                    } else {
+                        const progress = (scrollX - start) / perSlide;
+                        x = viewportWidth - progress * viewportWidth;
+                    }
+
+                    return (
+                        <div
+                            key={idx}
+                            style={{
+                                position: "absolute",
+                                top: 0,
+                                left: 0,
+                                width: "100vw",
+                                height: "100vh",
+                                overflow: "hidden",
+                                zIndex: idx,
+                                transform: `translateX(${x}px)`,
+                                willChange: "transform",
+                            }}
+                        >
+                            <img
+                                src={src}
+                                alt={`slide-${idx}`}
+                                style={{
+                                    width: "100%",
+                                    height: "100%",
+                                    objectFit: "cover",
+                                    objectPosition: "center center",
+                                }}
+                            />
+                        </div>
+                    );
+                })}
             </div>
         </div>
     );

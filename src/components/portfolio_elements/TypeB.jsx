@@ -85,7 +85,7 @@ export default function TypeB({
     return (
         <div style={{ marginTop: "64px" }}>
             {title && (
-                <h2 style={{ textAlign: "center", color: "#25a9f0" }}>{title}</h2>
+                <h2 style={{ textAlign: "center" }}>{title}</h2>
             )}
             {description && (
                 <h4 style={{ margin: "8px 0 16px", textAlign: "center" }}>{description}</h4>
