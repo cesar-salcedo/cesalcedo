@@ -25,6 +25,8 @@ export default function Contact() {
             }}
         >
             <h2 style={{ textAlign: "center" }}>Say hello!</h2>
+            <hr style={{ width: "100%", border: "none", borderTop: "1px solid #ccc" }} />
+
             <form
                 onSubmit={handleSubmit}
                 style={{
