@@ -20,7 +20,7 @@ import gif01 from '../assets/images/elephant_07.webp';
 
 export default function Portfolio() {
     return (
-        <div style={{
+        <section id="portfolio" style={{
             marginTop: "32px"
         }}>
             <h2 style={{ textAlign: "center" }}>Portfolio</h2>
@@ -47,8 +47,6 @@ export default function Portfolio() {
                 src={gif01}
             />
 
-
-            {/* Puedes repetir para más proyectos */}
-        </div>
+        </section>
     );
 }
