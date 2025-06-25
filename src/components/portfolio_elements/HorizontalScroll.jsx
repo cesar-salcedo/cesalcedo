@@ -10,8 +10,9 @@ import React, { useRef, useEffect, useState, useCallback } from "react";
  * Un valor más alto hace que el scroll horizontal sea más rápido en relación al scroll vertical.
  * Se recomienda un valor entre 2.5 y 4 para una experiencia óptima.
  */
-const HorizontalScrollGallery = ({ images, scrollVelocity = 1.8 }) => {
+const HorizontalScrollGallery = ({ images, scrollVelocity = 1, isDesktop = false }) => {
     // Referencia al contenedor principal para medir su posición y altura.
+    const resScrollVelocity = isDesktop ? scrollVelocity * 3 : scrollVelocity;
     const containerRef = useRef(null);
 
     // Estados para almacenar las dimensiones necesarias para los cálculos.
@@ -28,7 +29,7 @@ const HorizontalScrollGallery = ({ images, scrollVelocity = 1.8 }) => {
 
         // 'perSlide' es la cantidad de píxeles de scroll vertical que se necesitan
         // para completar la transición de una sola imagen.
-        const perSlide = vw / scrollVelocity;
+        const perSlide = vw / resScrollVelocity;
 
         // Número de animaciones (una menos que el total de imágenes, ya que la primera es estática).
         const animCount = Math.max(images.length - 1, 0);
@@ -37,7 +38,7 @@ const HorizontalScrollGallery = ({ images, scrollVelocity = 1.8 }) => {
         // más la altura de la ventana para asegurar que el último frame permanezca visible.
         const totalScrollDistance = animCount * perSlide;
         setContainerHeight(totalScrollDistance + window.innerHeight);
-    }, [images.length, scrollVelocity]);
+    }, [images.length, resScrollVelocity]);
 
     // Efecto para actualizar las dimensiones al montar el componente y al redimensionar la ventana.
     useEffect(() => {
@@ -59,7 +60,7 @@ const HorizontalScrollGallery = ({ images, scrollVelocity = 1.8 }) => {
             const rawScroll = window.scrollY - containerTop;
 
             // Define los límites de la animación.
-            const perSlide = viewportWidth / scrollVelocity;
+            const perSlide = viewportWidth / resScrollVelocity;
             const animCount = Math.max(images.length - 1, 0);
             const maxScroll = animCount * perSlide;
 
@@ -71,7 +72,7 @@ const HorizontalScrollGallery = ({ images, scrollVelocity = 1.8 }) => {
         window.addEventListener("scroll", onScroll, { passive: true });
         onScroll(); // Llama una vez al inicio para la posición inicial.
         return () => window.removeEventListener("scroll", onScroll);
-    }, [images.length, viewportWidth, scrollVelocity]);
+    }, [images.length, viewportWidth, resScrollVelocity]);
 
 
     // --- RENDERIZADO ---
@@ -115,7 +116,7 @@ const HorizontalScrollGallery = ({ images, scrollVelocity = 1.8 }) => {
                     }
 
                     // --- LÓGICA DE ANIMACIÓN POR IMAGEN ---
-                    const perSlide = viewportWidth / scrollVelocity;
+                    const perSlide = viewportWidth / resScrollVelocity;
                     const animIndex = idx - 1; // El índice de animación empieza desde 0 para la segunda imagen.
 
                     // Define el rango de scroll en el que esta imagen específica debe animarse.

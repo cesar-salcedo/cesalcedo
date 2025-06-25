@@ -1,7 +1,8 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import TypeA from './portfolio_elements/TypeA';
 import TypeB from './portfolio_elements/TypeB';
 import TypeD from './portfolio_elements/TypeD';
+
 
 import img1 from '../assets/images/mouth_01.jpg';
 import img2 from '../assets/images/mouth_02.jpg';
@@ -19,6 +20,15 @@ import gif01 from '../assets/images/elephant_07.webp';
 
 
 export default function Portfolio() {
+    const [isDesktop, setIsDesktop] = useState(
+        typeof window !== "undefined" ? window.innerWidth >= 768 : false
+    );
+    useEffect(() => {
+        const handleResize = () => setIsDesktop(window.innerWidth >= 768);
+        window.addEventListener("resize", handleResize);
+        return () => window.removeEventListener("resize", handleResize);
+    }, []);
+
     return (
         <section id="portfolio" style={{
             marginTop: "32px"
@@ -31,6 +41,7 @@ export default function Portfolio() {
                 description={"Optimized for close-up rendering and facial animation. Features 8K textures, 16-bit displacement maps, and full compatibility with Cycles and V-Ray. Includes original modeling, UV layout, shading, rigging, and presentation."}
                 profit={"$21.000 profit. + 300 sales."}
                 images={[img1, img2, img3, img4, img5]}
+                isDesktop={isDesktop}
             />
 
             <TypeB
@@ -39,12 +50,14 @@ export default function Portfolio() {
                 profit={"$68,000 profit, +300 sales."}
                 imageH={img7}
                 imageW={img6}
+                isDesktop={isDesktop}
             />
             <TypeD
                 title={"African Elephant"}
                 description={"Game-ready 3D model with 8K PBR textures, clean UVs, and a fully rigged skeleton with IK/FK chains. Balanced for real-time performance and visual fidelity across VR, AR, games, and cinematics."}
                 profit={"$8.000 profit. +50 sales"}
                 src={gif01}
+                isDesktop={isDesktop}
             />
 
         </section>
