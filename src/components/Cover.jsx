@@ -1,5 +1,4 @@
 import React, { useState, useEffect } from "react";
-import { motion } from "framer-motion";
 import ImageZoomProgressive from "./utils/ImageZoomProgressive.jsx";
 import img1 from "../assets/images/finn_01.jpg";
 import img2 from "../assets/images/mouth_01.jpg";
@@ -74,7 +73,7 @@ export default function Portfolio() {
             }}
         >
             {items.map(({ alt, src, pos }, idx) => (
-                <motion.div
+                <div
                     key={idx}
                     custom={idx}
                     initial="hidden"
@@ -93,7 +92,7 @@ export default function Portfolio() {
                         maxScale={1.8}
                         objectPosition={pos}
                     />
-                </motion.div>
+                </div>
             ))}
         </section>
     );
