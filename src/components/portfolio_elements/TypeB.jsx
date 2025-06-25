@@ -1,6 +1,6 @@
 import React from "react";
-import Description from './Description.jsx';
-import ImageZoomProgressive from "./ImageZoomProgressive";
+import Description from '../utils/DescriptionA.jsx';
+import ImageZoomProgressive from "../utils/ImageZoomProgressive.jsx";
 
 
 export default function TypeB({

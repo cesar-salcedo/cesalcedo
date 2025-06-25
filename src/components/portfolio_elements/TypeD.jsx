@@ -1,5 +1,6 @@
 import React from 'react';
-import Description from './Description.jsx';
+import Description from '../utils/DescriptionA.jsx';
+
 
 
 export default function TipoD({

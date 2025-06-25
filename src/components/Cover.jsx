@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { motion } from "framer-motion";
-import ImageZoomProgressive from "./portfolio_elements/ImageZoomProgressive.jsx";
+import ImageZoomProgressive from "./utils/ImageZoomProgressive.jsx";
 import img1 from "../assets/images/finn_01.jpg";
 import img2 from "../assets/images/mouth_01.jpg";
 import img3 from "../assets/images/gas_planet_01.jpg";

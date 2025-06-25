@@ -1,6 +1,6 @@
 import React from 'react';
-import Description from './Description.jsx';
-import HorizontalScroll from './HorizontalScroll.jsx';
+import Description from '../utils/DescriptionA.jsx';
+import HorizontalScroll from '../utils/HorizontalScroll.jsx';
 
 
 

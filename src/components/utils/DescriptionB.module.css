@@ -1,0 +1,51 @@
+/* Description.module.css */
+.container {
+    display: flex;
+    align-items: center;
+    overflow: hidden;
+    width: 100%;
+    padding: 1rem;
+    box-sizing: border-box;
+}
+
+.title {
+    /* Texto hueco y negrita */
+    font-size: 2rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    -webkit-text-fill-color: transparent;
+    -webkit-text-stroke-width: 1px;
+    -webkit-text-stroke-color: #000;
+    flex-shrink: 0;
+    /* que no encoge */
+    margin-right: 2rem;
+}
+
+.carousel {
+    position: relative;
+    white-space: nowrap;
+    flex-grow: 1;
+    /* ocupa el resto */
+}
+
+.track {
+    display: inline-block;
+    animation: scroll 20s linear infinite;
+}
+
+@keyframes scroll {
+    from {
+        transform: translateX(0);
+    }
+
+    to {
+        transform: translateX(-50%);
+    }
+}
+
+.item {
+    display: inline-block;
+    font-size: 1.25rem;
+    color: #4a5568;
+    margin-right: 3rem;
+}
