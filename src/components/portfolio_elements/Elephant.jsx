@@ -1,11 +1,12 @@
 import React from 'react';
 import Description from '../utils/DescriptionA.jsx';
-import GuillotineScrollGallery from '../utils/GuillotineScrollGallery.jsx';
+//import GuillotineScrollGallery from '../utils/GuillotineScrollGallery.jsx';
+import ImageZoomProgressive from "../utils/ImageZoomProgressive.jsx";
 
-import gif01 from '../../assets/images/elephant_07.webp';
 
 
-import gif02 from '../../assets/images/elephant_10.webp';
+
+import gif02 from '../../assets/images/elephant_11.webp';
 
 
 export default function TipoD({
@@ -16,7 +17,7 @@ export default function TipoD({
     isDesktop = false
 }) {
 
-    const images = [gif01, gif02]
+    const image = gif02
     return (
         <div style={{ marginTop: '64px' }}>
             <Description
@@ -25,8 +26,10 @@ export default function TipoD({
                 profit={profit}
             />
 
-            <GuillotineScrollGallery
-                images={images}
+            < ImageZoomProgressive
+                src={image}
+                maxScale={1.5}
+
 
             />
         </div>

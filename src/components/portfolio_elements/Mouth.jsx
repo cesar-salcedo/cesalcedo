@@ -1,6 +1,7 @@
 import React from 'react';
 import Description from '../utils/DescriptionA.jsx';
-import HorizontalScroll from '../utils/HorizontalScroll.jsx';
+//mport HorizontalScroll from '../utils/HorizontalScroll.jsx';
+import GuillotineScrollGallery from '../utils/GuillotineScrollGallery.jsx';
 
 import img1 from '../../assets/images/mouth_01.jpg';
 import img2 from '../../assets/images/mouth_02.jpg';
@@ -24,9 +25,9 @@ export default function Mouth({
             <Description
                 title={title}
                 description={description}
-                profit={profit}
+
             />
-            <HorizontalScroll
+            <GuillotineScrollGallery
                 images={images}
                 isDesktop={isDesktop}
             />
