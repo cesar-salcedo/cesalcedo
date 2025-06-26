@@ -36,7 +36,7 @@ export default function Mouth({
             <GuillotineScrollGallery
                 images={imagesB}
                 isDesktop={isDesktop}
-                scrollVelocity={4}
+                scrollVelocity={3}
             />
 
         </div>

@@ -38,7 +38,7 @@ export default function Mouth({
                 images={imagesA}
                 isDesktop={isDesktop}
                 scrollSpeed={4}
-                holdRatio={2.0}
+                holdRatio={0.3}
 
 
             />

@@ -14,7 +14,7 @@ const BlurFadeScrollGallery = ({
     images,
     scrollSpeed = 2.5,
     holdRatio = 0.7,
-    maxBlur = 120,
+    maxBlur = 60,
 }) => {
     const containerRef = useRef(null);
     const scrollSpaceRef = useRef(null);
