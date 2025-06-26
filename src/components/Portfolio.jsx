@@ -3,6 +3,7 @@ import Mouth from './portfolio_elements/Mouth';
 import SolarSystem from './portfolio_elements/SolarSystem';
 import Elephant from './portfolio_elements/Elephant';
 import Eye from './portfolio_elements/Eye';
+import GasPlanet from './portfolio_elements/GasPlanet'
 
 
 
@@ -34,13 +35,7 @@ export default function Portfolio() {
 
                 isDesktop={isDesktop}
             />
-            <Mouth
-                title={"Human Mouth"}
-                description={"Optimized for close-up rendering and facial animation. Features 8K textures, 16-bit displacement maps, and full compatibility with Cycles and V-Ray. Includes original modeling, UV layout, shading, rigging, and presentation."}
-                profit={"$21.000 profit. + 300 sales."}
-
-                isDesktop={isDesktop}
-            />
+            <Mouth isDesktop={isDesktop} />
 
             <SolarSystem
                 title={"Solar System"}
@@ -48,13 +43,8 @@ export default function Portfolio() {
                 profit={"$68,000 profit, +300 sales."}
                 isDesktop={isDesktop}
             />
-            <Eye
-                title={"Eye generator"}
-                description={"Optimized for close-up rendering and facial animation. Features 8K textures, 16-bit displacement maps, and full compatibility with Cycles and V-Ray. Includes original modeling, UV layout, shading, rigging, and presentation."}
-                profit={"$21.000 profit. + 300 sales."}
-
-                isDesktop={isDesktop}
-            />
+            <Eye isDesktop={isDesktop} />
+            <GasPlanet isDesktop={isDesktop} />
 
 
 
