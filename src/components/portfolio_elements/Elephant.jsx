@@ -4,9 +4,9 @@ import Description from '../utils/DescriptionA.jsx';
 import ImageZoomProgressive from "../utils/ImageZoomProgressive.jsx";
 
 
+import gif01 from '../../assets/images/elephant_11.webp';
 
-
-import gif02 from '../../assets/images/elephant_11.webp';
+import gif02 from '../../assets/images/elephant_13.webp';
 
 
 export default function TipoD({
@@ -17,7 +17,10 @@ export default function TipoD({
     isDesktop = false
 }) {
 
-    const image = gif02
+    const imageH = gif02;
+    const imageW = gif01;
+    const src = isDesktop ? imageW : imageH;
+
     return (
         <div style={{ marginTop: '64px' }}>
             <Description
@@ -27,7 +30,7 @@ export default function TipoD({
             />
 
             < ImageZoomProgressive
-                src={image}
+                src={src}
                 maxScale={1.5}
 
 
