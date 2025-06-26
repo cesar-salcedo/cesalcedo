@@ -13,7 +13,7 @@ import React, { useRef, useEffect, useState, useCallback } from "react";
 const BlurFadeScrollGallery = ({
     images,
     scrollSpeed = 2.5,
-    holdRatio = 0.9,
+    holdRatio = 0.7,
     maxBlur = 120,
 }) => {
     const containerRef = useRef(null);

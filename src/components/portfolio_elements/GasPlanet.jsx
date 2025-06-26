@@ -22,9 +22,8 @@ export default function Mouth({
     const description = "A fully procedural eye generator that creates infinite variations of iris and sclera patterns. Includes node-based materials, UV-ready exports, and a demo file for instant use. ";
 
 
-    const imagesA = [img1, img2, img3, img4, img5]
-    const imagesB = [img1, img2, img3, img4, img6]
-    const images = isDesktop ? imagesA : imagesB;
+    const imagesA = [img1, img2, img3, img4, img5, img6]
+
 
     return (
         <div style={{
@@ -36,8 +35,11 @@ export default function Mouth({
 
             />
             <DefocusScrollGallery
-                images={images}
+                images={imagesA}
                 isDesktop={isDesktop}
+                scrollSpeed={4}
+                holdRatio={0.5}
+
 
             />
 
