@@ -2,7 +2,7 @@ import React from "react";
 import Description from '../utils/DescriptionA.jsx';
 
 import VideoScrubber from '../utils/VideoScrubber.jsx'
-import video from '../../assets/images/rock_video03.mp4';
+import video from '../../assets/images/rock_video05.mp4';
 
 
 
