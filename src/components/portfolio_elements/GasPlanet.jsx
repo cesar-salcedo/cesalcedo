@@ -37,8 +37,8 @@ export default function Mouth({
             <DefocusScrollGallery
                 images={imagesA}
                 isDesktop={isDesktop}
-                scrollSpeed={4}
-                holdRatio={0.3}
+                scrollSpeed={3}
+                holdRatio={0.2}
 
 
             />
