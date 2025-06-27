@@ -10,7 +10,7 @@ import React, { useRef, useEffect, useState, useCallback } from "react";
  * @param {number} [props.holdRatio=0.5] - Controla la duración de la PAUSA. Es un ratio respecto a la duración de la transición. `0` = sin pausa. `0.5` = la pausa dura un 50% de lo que dura la transición. `1` = la pausa dura lo mismo que la transición.
  * @param {number} [props.maxBlur=30] - El nivel máximo de desenfoque en píxeles.
  */
-const BlurFadeScrollGallery = ({
+const DefocusScrollGallery = ({
     images,
     scrollSpeed = 2.5,
     holdRatio = 0.7,
@@ -158,4 +158,4 @@ const BlurFadeScrollGallery = ({
     );
 };
 
-export default BlurFadeScrollGallery;
+export default DefocusScrollGallery;

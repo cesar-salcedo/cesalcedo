@@ -4,6 +4,7 @@ import SolarSystem from './portfolio_elements/SolarSystem';
 import Elephant from './portfolio_elements/Elephant';
 import Eye from './portfolio_elements/Eye';
 import GasPlanet from './portfolio_elements/GasPlanet'
+import Rocks from './portfolio_elements/Rocks'
 
 
 
@@ -45,6 +46,7 @@ export default function Portfolio() {
             />
             <Eye isDesktop={isDesktop} />
             <GasPlanet isDesktop={isDesktop} />
+            <Rocks />
 
 
 

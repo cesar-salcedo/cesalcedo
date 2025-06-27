@@ -1,7 +1,8 @@
 import React from 'react';
 import Description from '../utils/DescriptionA.jsx';
-import HorizontalScroll from '../utils/HorizontalScroll.jsx';
+//import HorizontalScroll from '../utils/HorizontalScrollCallery.jsx';
 //import GuillotineScrollGallery from '../utils/GuillotineScrollGallery.jsx';
+import DefocusScrollGallery from '../utils/DefocusScrollGallery.jsx';
 
 
 import img1 from '../../assets/images/eye_gen_01.jpg';
@@ -35,10 +36,10 @@ export default function Mouth({
                 description={description}
 
             />
-            <HorizontalScroll
+            <DefocusScrollGallery
                 images={images}
-                isDesktop={isDesktop}
-
+                scrollSpeed={3}
+                holdRatio={0.2}
             />
 
 
