@@ -1,34 +1,22 @@
 import React from "react";
 import Description from '../utils/DescriptionA.jsx';
+import ImageSequenceScrubber from "../utils/ImageSequenceScrubber.jsx";
 
-import VideoScrubber from '../utils/VideoScrubber.jsx'
-import video from '../../assets/images/rock_video04.mp4';
-
-
-
-export default function Rocks({
-    title,
-    description,
-    isDesktop = false,
-}) {
-
-
-
-
+export default function Rocks({ title, description }) {
     return (
         <div style={{ marginTop: "64px" }}>
             <Description
                 title={title}
                 description={description}
-
             />
 
-
-            <VideoScrubber
-                src={video}
+            <ImageSequenceScrubber
+                // La ruta pública absoluta, como la usaría un navegador
+                folderPath={"/rocks_sequence"}
+                fileName="B"
+                frameCount={133} // Asegúrate que este número sea correcto
                 scrollFactor={2}
             />
-
         </div>
     );
 }
