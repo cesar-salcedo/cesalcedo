@@ -20,7 +20,7 @@ export default function Rocks() {
                 fileName="B"
                 frameCount={34} // Asegúrate que este número sea correcto
                 frameStep={4}
-                scrollFactor={0.75}
+                scrollFactor={0.6}
             />
         </div>
     );

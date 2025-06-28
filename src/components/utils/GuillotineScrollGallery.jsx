@@ -4,54 +4,61 @@ const GuillotineScrollGallery = ({
     images,
     scrollVelocity = 1.5,
     diagonalAngle = 25,
-    separatorWidth = 3,
+    separatorWidth = 4,
     separatorColor = "white",
 }) => {
     const containerRef = useRef(null);
     const scrollSpaceRef = useRef(0);
-
     const [containerHeight, setContainerHeight] = useState(0);
-    const [viewportWidth, setViewportWidth] = useState(window.innerWidth);
     const [scrollProgress, setScrollProgress] = useState(0);
     const [separatorAngle, setSeparatorAngle] = useState(0);
     const [separatorHeight, setSeparatorHeight] = useState(0);
 
     const updateDimensions = useCallback(() => {
         const vw = window.innerWidth;
-        setViewportWidth(vw);
+        const vh = window.innerHeight;
+        const count = Math.max(images.length - 1, 0);
 
-        const animCount = Math.max(images.length - 1, 0);
-        const totalScrollSpace = window.innerHeight * animCount / scrollVelocity;
-        scrollSpaceRef.current = totalScrollSpace;
-        setContainerHeight(totalScrollSpace + window.innerHeight);
+        // 1) altura total de scroll
+        const totalScroll = vh * count / scrollVelocity;
+        scrollSpaceRef.current = totalScroll;
+        setContainerHeight(totalScroll + vh);
 
-        const horizontalShift = diagonalAngle / 100 * vw;
-        const verticalShift = window.innerHeight;
-        const angleRad = Math.atan(horizontalShift / verticalShift);
-        const angleDeg = angleRad * 180 / Math.PI;
-        const hypo = Math.hypot(verticalShift, horizontalShift);
-
-        setSeparatorAngle(angleDeg);
-        setSeparatorHeight(hypo);
+        // 2) cálculo ángulo y longitud de la hipotenusa
+        const horiz = (diagonalAngle / 100) * vw;
+        const angleRad = Math.atan(horiz / vh);
+        setSeparatorAngle(angleRad * 180 / Math.PI);
+        setSeparatorHeight(Math.hypot(vh, horiz));
     }, [images.length, scrollVelocity, diagonalAngle]);
 
     useEffect(() => {
-        updateDimensions();
-        window.addEventListener("resize", updateDimensions);
-        return () => window.removeEventListener("resize", updateDimensions);
-    }, [updateDimensions]);
+        let frameId;
 
-    useEffect(() => {
-        const onScroll = () => {
-            if (!containerRef.current) return;
-            const { top } = containerRef.current.getBoundingClientRect();
-            const prog = Math.min(Math.max(-top / scrollSpaceRef.current, 0), 1);
-            setScrollProgress(prog);
+        const handleUpdate = () => {
+            // cancelamos cualquier frame pendiente
+            if (frameId) cancelAnimationFrame(frameId);
+
+            frameId = requestAnimationFrame(() => {
+                updateDimensions();
+
+                // 3) progreso de scroll
+                if (!containerRef.current) return;
+                const top = containerRef.current.getBoundingClientRect().top;
+                const prog = Math.min(Math.max(-top / scrollSpaceRef.current, 0), 1);
+                setScrollProgress(prog);
+            });
         };
-        window.addEventListener("scroll", onScroll, { passive: true });
-        onScroll();
-        return () => window.removeEventListener("scroll", onScroll);
-    }, []);
+
+        window.addEventListener("scroll", handleUpdate, { passive: true });
+        window.addEventListener("resize", handleUpdate);
+        handleUpdate(); // llamada inicial
+
+        return () => {
+            window.removeEventListener("scroll", handleUpdate);
+            window.removeEventListener("resize", handleUpdate);
+            if (frameId) cancelAnimationFrame(frameId);
+        };
+    }, [updateDimensions]);
 
     if (!images?.length) return null;
     const animCount = images.length - 1;
@@ -76,8 +83,9 @@ const GuillotineScrollGallery = ({
                 }}
             >
                 {images.map((src, idx) => {
-                    const progSlide = scrollProgress * animCount - (idx - 1);
-                    const p = Math.min(Math.max(progSlide, 0), 1);
+                    // 4) cálculo de clip-path y posición de la línea
+                    const slideProg = scrollProgress * animCount - (idx - 1);
+                    const p = Math.min(Math.max(slideProg, 0), 1);
 
                     let clip = "polygon(100% 0%,100% 0%,100% 100%,100% 100%)";
                     let sepX = 0;
@@ -87,18 +95,15 @@ const GuillotineScrollGallery = ({
                         const revealW = 100 + diagonalAngle;
                         const topPos = p * revealW;
                         const botPos = topPos - diagonalAngle;
-                        const leftTopX = 100 - topPos;
-                        const leftBotX = 100 - botPos;
+                        const leftTop = 100 - topPos;
+                        const leftBot = 100 - botPos;
 
-                        clip = `polygon(${leftTopX}% 0%,100% 0%,100% 100%,${leftBotX}% 100%)`;
-
-                        // calculamos en px en lugar de usar %
-                        sepX = (leftTopX / 100) * viewportWidth;
+                        clip = `polygon(${leftTop}% 0%,100% 0%,100% 100%,${leftBot}% 100%)`;
+                        sepX = (leftTop / 100) * window.innerWidth;
                         sepOp = 1;
                     } else if (p >= 1) {
                         clip = "polygon(0% 0%,100% 0%,100% 100%,0% 100%)";
                     }
-
                     if (idx === 0) clip = "none";
 
                     return (
