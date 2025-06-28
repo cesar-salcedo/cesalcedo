@@ -1,46 +1,26 @@
 import React, { useRef, useEffect, useState, useCallback } from "react";
 
-/**
- * Un componente de galería que transforma el scroll vertical en un desplazamiento horizontal
- * de imágenes dentro de un contenedor "pegajoso" (sticky).
- *
- * @param {object} props - Las propiedades del componente.
- * @param {string[]} props.images - Un array de URLs de las imágenes a mostrar.
- * @param {number} [props.scrollVelocity=3] - Un factor que controla la velocidad de la animación.
- * Un valor más alto hace que el scroll horizontal sea más rápido en relación al scroll vertical.
- * Se recomienda un valor entre 2.5 y 4 para una experiencia óptima.
- */
 const HorizontalScrollGallery = ({ images, scrollVelocity = 1, isDesktop = false }) => {
-    // Referencia al contenedor principal para medir su posición y altura.
-    const resScrollVelocity = isDesktop ? scrollVelocity * 3 : scrollVelocity;
     const containerRef = useRef(null);
+    const resScrollVelocity = isDesktop ? scrollVelocity * 3 : scrollVelocity;
 
-    // Estados para almacenar las dimensiones necesarias para los cálculos.
-    const [viewportWidth, setViewportWidth] = useState(window.innerWidth);
-    const [scrollX, setScrollX] = useState(0);
+    // --- ESTADO MODIFICADO ---
+    // Reemplazamos 'scrollX' y 'viewportWidth' por un único estado de progreso.
+    const [scrollProgress, setScrollProgress] = useState(0);
     const [containerHeight, setContainerHeight] = useState(0);
 
-    // --- CÁLCULO DE DIMENSIONES ---
-    // Esta función se encarga de calcular la altura total que debe tener el contenedor
-    // para que el efecto de scroll funcione correctamente.
+    // --- CÁLCULO DE DIMENSIONES (Sin cambios funcionales, solo limpieza) ---
     const updateDims = useCallback(() => {
         const vw = window.innerWidth;
-        setViewportWidth(vw);
+        const vh = window.innerHeight;
 
-        // 'perSlide' es la cantidad de píxeles de scroll vertical que se necesitan
-        // para completar la transición de una sola imagen.
         const perSlide = vw / resScrollVelocity;
-
-        // Número de animaciones (una menos que el total de imágenes, ya que la primera es estática).
         const animCount = Math.max(images.length - 1, 0);
-
-        // La altura total es la distancia de scroll necesaria para todas las animaciones,
-        // más la altura de la ventana para asegurar que el último frame permanezca visible.
         const totalScrollDistance = animCount * perSlide;
-        setContainerHeight(totalScrollDistance + window.innerHeight);
+
+        setContainerHeight(totalScrollDistance + vh);
     }, [images.length, resScrollVelocity]);
 
-    // Efecto para actualizar las dimensiones al montar el componente y al redimensionar la ventana.
     useEffect(() => {
         updateDims();
         window.addEventListener("resize", updateDims);
@@ -48,34 +28,43 @@ const HorizontalScrollGallery = ({ images, scrollVelocity = 1, isDesktop = false
     }, [updateDims]);
 
 
-    // --- MANEJO DEL SCROLL ---
-    // Este efecto escucha el evento de scroll de la página y calcula la posición
-    // de la animación horizontal.
+    // --- MANEJO DEL SCROLL (LÓGICA COMPLETAMENTE REFACTORIZADA) ---
     useEffect(() => {
+        let animationFrameId;
+
         const onScroll = () => {
             if (!containerRef.current) return;
 
-            // Calcula cuánto se ha scrolleado dentro del contenedor principal.
-            const containerTop = containerRef.current.offsetTop;
-            const rawScroll = window.scrollY - containerTop;
+            // 1. Obtenemos la posición precisa relativa al viewport.
+            const rect = containerRef.current.getBoundingClientRect();
 
-            // Define los límites de la animación.
-            const perSlide = viewportWidth / resScrollVelocity;
-            const animCount = Math.max(images.length - 1, 0);
-            const maxScroll = animCount * perSlide;
+            // 2. Calculamos la distancia total que se puede scrollear.
+            const scrollableDistance = containerHeight - window.innerHeight;
+            if (scrollableDistance <= 0) return; // Evitar división por cero si no hay scroll.
 
-            // Limita el valor de scrollX entre 0 y el máximo posible para evitar cálculos erróneos.
-            const clampedScroll = Math.min(Math.max(rawScroll, 0), maxScroll);
-            setScrollX(clampedScroll);
+            // 3. Calculamos el progreso normalizado (0 a 1).
+            const progress = Math.max(0, Math.min(1, -rect.top / scrollableDistance));
+
+            // 4. Actualizamos el estado.
+            setScrollProgress(progress);
         };
 
-        window.addEventListener("scroll", onScroll, { passive: true });
-        onScroll(); // Llama una vez al inicio para la posición inicial.
-        return () => window.removeEventListener("scroll", onScroll);
-    }, [images.length, viewportWidth, resScrollVelocity]);
+        const onScrollWithRaf = () => {
+            if (animationFrameId) cancelAnimationFrame(animationFrameId);
+            animationFrameId = requestAnimationFrame(onScroll);
+        };
+
+        window.addEventListener("scroll", onScrollWithRaf, { passive: true });
+        onScroll();
+
+        return () => {
+            window.removeEventListener("scroll", onScrollWithRaf);
+            if (animationFrameId) cancelAnimationFrame(animationFrameId);
+        };
+    }, [containerHeight]); // La dependencia es solo la altura total.
 
 
-    // --- RENDERIZADO ---
+    // --- RENDERIZADO (Adaptado para usar 'scrollProgress') ---
     if (!images?.length) return null;
 
     return (
@@ -84,7 +73,7 @@ const HorizontalScrollGallery = ({ images, scrollVelocity = 1, isDesktop = false
             style={{
                 position: "relative",
                 height: `${containerHeight}px`,
-                backgroundColor: "#efefef", // Un fondo para visualizar el área total.
+                backgroundColor: "#efefef",
             }}
         >
             <div
@@ -98,43 +87,34 @@ const HorizontalScrollGallery = ({ images, scrollVelocity = 1, isDesktop = false
                 }}
             >
                 {images.map((src, idx) => {
-                    // La primera imagen (idx === 0) es estática y sirve de fondo inicial.
                     if (idx === 0) {
                         return (
-                            <div
-                                key={idx}
-                                style={{
-                                    position: "absolute",
-                                    top: 0, left: 0,
-                                    width: "100vw", height: "100vh",
-                                    zIndex: 0,
-                                }}
-                            >
+                            <div key={idx} style={{ position: "absolute", top: 0, left: 0, width: "100vw", height: "100vh", zIndex: 0 }}>
                                 <img src={src} alt="slide-static" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
                             </div>
                         );
                     }
 
-                    // --- LÓGICA DE ANIMACIÓN POR IMAGEN ---
-                    const perSlide = viewportWidth / resScrollVelocity;
-                    const animIndex = idx - 1; // El índice de animación empieza desde 0 para la segunda imagen.
+                    // --- LÓGICA DE ANIMACIÓN REVISADA ---
+                    const animCount = images.length - 1;
+                    const progressPerSlide = 1 / animCount;
 
-                    // Define el rango de scroll en el que esta imagen específica debe animarse.
-                    const startAt = animIndex * perSlide;
-                    const endAt = (animIndex + 1) * perSlide;
+                    const startProgress = (idx - 1) * progressPerSlide;
+                    const endProgress = idx * progressPerSlide;
 
-                    let x; // La posición translateX de la imagen.
-                    if (scrollX <= startAt) {
-                        // Antes de que empiece su animación, la imagen está fuera de la pantalla a la derecha.
-                        x = viewportWidth;
-                    } else if (scrollX >= endAt) {
-                        // Después de que termine su animación, la imagen está completamente visible.
+                    let x;
+                    const vw = window.innerWidth;
+
+                    if (scrollProgress <= startProgress) {
+                        // Antes, la imagen está a la derecha.
+                        x = vw;
+                    } else if (scrollProgress >= endProgress) {
+                        // Después, la imagen está en su sitio.
                         x = 0;
                     } else {
-                        // Durante la animación, calcula el progreso (de 0 a 1).
-                        const progress = (scrollX - startAt) / perSlide;
-                        // Mueve la imagen desde la derecha (viewportWidth) hacia la izquierda (0).
-                        x = viewportWidth - (progress * viewportWidth);
+                        // Durante la animación, se interpola su posición.
+                        const localProgress = (scrollProgress - startProgress) / progressPerSlide;
+                        x = vw - (localProgress * vw);
                     }
 
                     return (
@@ -146,7 +126,7 @@ const HorizontalScrollGallery = ({ images, scrollVelocity = 1, isDesktop = false
                                 width: "100vw", height: "100vh",
                                 zIndex: idx,
                                 transform: `translateX(${x}px)`,
-                                willChange: "transform", // Optimización para el navegador.
+                                willChange: "transform",
                             }}
                         >
                             <img src={src} alt={`slide-${idx}`} style={{ width: "100%", height: "100%", objectFit: "cover" }} />

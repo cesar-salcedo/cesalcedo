@@ -1,19 +1,6 @@
 import React, { useRef, useEffect, useState, useCallback } from 'react';
 
-/**
- * Componente que renderiza una secuencia de imágenes en un canvas,
- * controlando el frame actual con el scroll.
- * Esta versión está adaptada para manejar secuencias con saltos numéricos (patrones).
- * @param {object} props
- * @param {string} props.folderPath - Ruta a la carpeta de imágenes en /public.
- * @param {string} props.fileName - El prefijo del nombre de los archivos (ej: "B").
- * @param {number} props.startFrame - El número del primer fotograma.
- * @param {number} props.frameCount - El NÚMERO TOTAL de imágenes a cargar.
- * @param {number} props.frameStep - El incremento numérico entre cada frame.
- * @param {number} [props.scrollFactor=2] - Multiplicador para la altura del scroll.
- */
 const ImageSequenceScrubber = ({ folderPath, fileName, startFrame = 1, frameCount, frameStep = 1, scrollFactor = 2 }) => {
-    // --- Refs y Estado (sin cambios) ---
     const canvasRef = useRef(null);
     const containerRef = useRef(null);
     const [frames, setFrames] = useState([]);
@@ -21,20 +8,14 @@ const ImageSequenceScrubber = ({ folderPath, fileName, startFrame = 1, frameCoun
     const [containerHeight, setContainerHeight] = useState(0);
     const isLoading = frames.length < frameCount;
 
-    // --- EFECTO 1: Precarga de imágenes con la lógica de saltos (frameStep) ---
+    // --- EFECTO 1: Precarga de imágenes (sin cambios) ---
     useEffect(() => {
         const loadFrames = async () => {
             const loadedFrames = [];
-            // El bucle itera 'frameCount' veces para cargar el número total de imágenes
             for (let i = 0; i < frameCount; i++) {
                 const img = new Image();
-
-                // --- LÓGICA MODIFICADA ---
-                // Se calcula el número de frame real usando el inicio y el salto
                 const frameNumber = startFrame + (i * frameStep);
                 const paddedIndex = String(frameNumber).padStart(4, '0');
-                // -------------------------
-
                 img.src = `${folderPath}/${fileName}${paddedIndex}.webp`;
 
                 await new Promise(resolve => {
@@ -47,7 +28,6 @@ const ImageSequenceScrubber = ({ folderPath, fileName, startFrame = 1, frameCoun
             setFrames(loadedFrames);
         };
         loadFrames();
-        // Dependencias actualizadas para incluir las nuevas props
     }, [folderPath, fileName, startFrame, frameCount, frameStep]);
 
     // --- EFECTO 2: Cálculo de altura del contenedor (sin cambios) ---
@@ -62,17 +42,19 @@ const ImageSequenceScrubber = ({ folderPath, fileName, startFrame = 1, frameCoun
         return () => window.removeEventListener('resize', updateHeight);
     }, [updateHeight]);
 
-    // --- EFECTO 3: Lógica de scroll, resize y dibujado (sin cambios) ---
+    // --- EFECTO 3: Lógica de scroll, resize y dibujado (CON CAMBIOS) ---
     useEffect(() => {
         if (isLoading || frames.length === 0) return;
 
         const canvas = canvasRef.current;
         const context = canvas.getContext('2d');
         let currentFrameIndex = -1;
+        let animationFrameId;
 
         const resizeCanvas = () => {
             canvas.width = window.innerWidth;
             canvas.height = window.innerHeight;
+            // Redibujar el frame actual tras el resize
             drawFrame(currentFrameIndex > -1 ? currentFrameIndex : 0);
         };
 
@@ -92,31 +74,49 @@ const ImageSequenceScrubber = ({ folderPath, fileName, startFrame = 1, frameCoun
             }
         };
 
+        // --- LÓGICA DE SCROLL MEJORADA ---
         const onScroll = () => {
             if (!containerRef.current) return;
-            const containerTop = containerRef.current.offsetTop;
-            const scrollTop = window.scrollY - containerTop;
+
+            // Obtenemos la posición del contenedor relativa al viewport.
+            const rect = containerRef.current.getBoundingClientRect();
+
+            // La distancia total que se puede scrollear "dentro" del componente.
             const scrollDistance = containerHeight - window.innerHeight;
-            let progress = Math.max(0, Math.min(1, scrollTop / scrollDistance));
+
+            // Cuando el componente entra por abajo, rect.top es positivo.
+            // Cuando está pegado arriba, rect.top es 0.
+            // A medida que scrolleamos, rect.top se vuelve negativo.
+            // Usamos -rect.top para tener un valor positivo que crece con el scroll.
+            // Clamp (Math.max/min) asegura que el progreso se mantenga entre 0 y 1.
+            const progress = Math.max(0, Math.min(1, -rect.top / scrollDistance));
+
             const frameIndex = Math.floor(progress * (frames.length - 1));
 
             if (frameIndex !== currentFrameIndex) {
                 currentFrameIndex = frameIndex;
-                requestAnimationFrame(() => drawFrame(frameIndex));
+                // Usamos requestAnimationFrame para el dibujado, optimizando el rendimiento.
+                if (animationFrameId) cancelAnimationFrame(animationFrameId);
+                animationFrameId = requestAnimationFrame(() => drawFrame(frameIndex));
             }
         };
+        // --- FIN DE LA LÓGICA MEJORADA ---
 
         window.addEventListener('scroll', onScroll, { passive: true });
         window.addEventListener('resize', resizeCanvas);
+
+        // Llamada inicial para dibujar el primer frame
         resizeCanvas();
+        onScroll();
 
         return () => {
             window.removeEventListener('scroll', onScroll);
             window.removeEventListener('resize', resizeCanvas);
+            if (animationFrameId) cancelAnimationFrame(animationFrameId);
         };
-    }, [isLoading, frames, containerHeight, frameCount]);
+    }, [isLoading, frames, containerHeight]); // frameCount eliminado de las dependencias, ya está implícito en 'frames'
 
-    // --- JSX para renderizar (sin cambios) ---
+    // --- JSX (sin cambios) ---
     return (
         <div ref={containerRef} style={{ height: `${containerHeight}px`, position: 'relative' }}>
             <div style={{ position: 'sticky', top: 0, height: '100vh', width: '100%' }}>

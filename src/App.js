@@ -5,6 +5,7 @@ import Cover from "./components/Cover";
 import Portfolio from "./components/Portfolio";
 import About from "./components/About";
 import Contact from "./components/Contact";
+import AcceleratedEntry from "./components/utils/AcceleratedEntry";
 
 function App() {
   return (
@@ -17,7 +18,9 @@ function App() {
     }}>
       <Header />
       <Cover />
-      <Portfolio />
+      <AcceleratedEntry intensity={1} delay={2}>
+        <Portfolio />
+      </AcceleratedEntry>
       <About />
       <Contact />
     </div>
