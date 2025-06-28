@@ -1,6 +1,19 @@
 import React, { useRef, useEffect, useState, useCallback } from 'react';
 
-const ImageSequenceScrubber = ({ folderPath, fileName, frameCount, scrollFactor = 2 }) => {
+/**
+ * Componente que renderiza una secuencia de imágenes en un canvas,
+ * controlando el frame actual con el scroll.
+ * Esta versión está adaptada para manejar secuencias con saltos numéricos (patrones).
+ * @param {object} props
+ * @param {string} props.folderPath - Ruta a la carpeta de imágenes en /public.
+ * @param {string} props.fileName - El prefijo del nombre de los archivos (ej: "B").
+ * @param {number} props.startFrame - El número del primer fotograma.
+ * @param {number} props.frameCount - El NÚMERO TOTAL de imágenes a cargar.
+ * @param {number} props.frameStep - El incremento numérico entre cada frame.
+ * @param {number} [props.scrollFactor=2] - Multiplicador para la altura del scroll.
+ */
+const ImageSequenceScrubber = ({ folderPath, fileName, startFrame = 1, frameCount, frameStep = 1, scrollFactor = 2 }) => {
+    // --- Refs y Estado (sin cambios) ---
     const canvasRef = useRef(null);
     const containerRef = useRef(null);
     const [frames, setFrames] = useState([]);
@@ -8,12 +21,20 @@ const ImageSequenceScrubber = ({ folderPath, fileName, frameCount, scrollFactor 
     const [containerHeight, setContainerHeight] = useState(0);
     const isLoading = frames.length < frameCount;
 
+    // --- EFECTO 1: Precarga de imágenes con la lógica de saltos (frameStep) ---
     useEffect(() => {
         const loadFrames = async () => {
             const loadedFrames = [];
-            for (let i = 1; i <= frameCount; i++) {
+            // El bucle itera 'frameCount' veces para cargar el número total de imágenes
+            for (let i = 0; i < frameCount; i++) {
                 const img = new Image();
-                const paddedIndex = String(i).padStart(4, '0');
+
+                // --- LÓGICA MODIFICADA ---
+                // Se calcula el número de frame real usando el inicio y el salto
+                const frameNumber = startFrame + (i * frameStep);
+                const paddedIndex = String(frameNumber).padStart(4, '0');
+                // -------------------------
+
                 img.src = `${folderPath}/${fileName}${paddedIndex}.webp`;
 
                 await new Promise(resolve => {
@@ -21,13 +42,15 @@ const ImageSequenceScrubber = ({ folderPath, fileName, frameCount, scrollFactor 
                     img.onerror = resolve;
                 });
                 loadedFrames.push(img);
-                setLoadingProgress(((i / frameCount) * 100));
+                setLoadingProgress(((i + 1) / frameCount) * 100);
             }
             setFrames(loadedFrames);
         };
         loadFrames();
-    }, [folderPath, fileName, frameCount]);
+        // Dependencias actualizadas para incluir las nuevas props
+    }, [folderPath, fileName, startFrame, frameCount, frameStep]);
 
+    // --- EFECTO 2: Cálculo de altura del contenedor (sin cambios) ---
     const updateHeight = useCallback(() => {
         const scrollDistance = window.innerHeight * scrollFactor;
         setContainerHeight(scrollDistance + window.innerHeight);
@@ -39,6 +62,7 @@ const ImageSequenceScrubber = ({ folderPath, fileName, frameCount, scrollFactor 
         return () => window.removeEventListener('resize', updateHeight);
     }, [updateHeight]);
 
+    // --- EFECTO 3: Lógica de scroll, resize y dibujado (sin cambios) ---
     useEffect(() => {
         if (isLoading || frames.length === 0) return;
 
@@ -92,6 +116,7 @@ const ImageSequenceScrubber = ({ folderPath, fileName, frameCount, scrollFactor 
         };
     }, [isLoading, frames, containerHeight, frameCount]);
 
+    // --- JSX para renderizar (sin cambios) ---
     return (
         <div ref={containerRef} style={{ height: `${containerHeight}px`, position: 'relative' }}>
             <div style={{ position: 'sticky', top: 0, height: '100vh', width: '100%' }}>

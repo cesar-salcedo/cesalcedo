@@ -15,6 +15,7 @@ export default function Rocks({ title, description }) {
                 folderPath={"/rocks_sequence"}
                 fileName="B"
                 frameCount={133} // Asegúrate que este número sea correcto
+                frameStep={4}
                 scrollFactor={2}
             />
         </div>
