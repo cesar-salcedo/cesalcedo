@@ -1,38 +1,39 @@
-import React, { useRef, useEffect, useState, useCallback } from "react";
+import React, { useRef, useEffect, useState, useCallback, Fragment } from "react";
 
-/**
- * Un componente de galería que revela imágenes mediante un efecto de "guillotina" diagonal
- * sincronizado con el scroll vertical del usuario. Versión corregida para que la última imagen permanezca fija.
- *
- * @param {object} props - Las propiedades del componente.
- * @param {string[]} props.images - Un array de URLs de las imágenes a mostrar.
- * @param {number} [props.scrollVelocity=1.5] - Factor que controla la cantidad de scroll necesario para una transición.
- * @param {number} [props.diagonalAngle=25] - Define la inclinación del barrido en porcentaje.
- */
 const GuillotineScrollGallery = ({
     images,
     scrollVelocity = 1.5,
     diagonalAngle = 25,
+    separatorWidth = 3,
+    separatorColor = "white",
 }) => {
     const containerRef = useRef(null);
-    const scrollSpaceRef = useRef(0); // <-- 1. Añadimos un Ref para la distancia de scroll
-    const [containerHeight, setContainerHeight] = useState(0);
-    const [scrollProgress, setScrollProgress] = useState(0);
+    const scrollSpaceRef = useRef(0);
 
-    // --- CÁLCULO DE DIMENSIONES ---
+    const [containerHeight, setContainerHeight] = useState(0);
+    const [viewportWidth, setViewportWidth] = useState(window.innerWidth);
+    const [scrollProgress, setScrollProgress] = useState(0);
+    const [separatorAngle, setSeparatorAngle] = useState(0);
+    const [separatorHeight, setSeparatorHeight] = useState(0);
+
     const updateDimensions = useCallback(() => {
-        if (!containerRef.current) return;
+        const vw = window.innerWidth;
+        setViewportWidth(vw);
 
         const animCount = Math.max(images.length - 1, 0);
-        const totalScrollSpace = window.innerHeight * animCount * (1 / scrollVelocity);
-
-        // Guardamos la distancia de scroll de la animación en el ref
+        const totalScrollSpace = window.innerHeight * animCount / scrollVelocity;
         scrollSpaceRef.current = totalScrollSpace;
-
-        // La altura total incluye el espacio para la animación MÁS un viewport entero de "pausa"
         setContainerHeight(totalScrollSpace + window.innerHeight);
 
-    }, [images.length, scrollVelocity]);
+        const horizontalShift = diagonalAngle / 100 * vw;
+        const verticalShift = window.innerHeight;
+        const angleRad = Math.atan(horizontalShift / verticalShift);
+        const angleDeg = angleRad * 180 / Math.PI;
+        const hypo = Math.hypot(verticalShift, horizontalShift);
+
+        setSeparatorAngle(angleDeg);
+        setSeparatorHeight(hypo);
+    }, [images.length, scrollVelocity, diagonalAngle]);
 
     useEffect(() => {
         updateDimensions();
@@ -40,35 +41,20 @@ const GuillotineScrollGallery = ({
         return () => window.removeEventListener("resize", updateDimensions);
     }, [updateDimensions]);
 
-    // --- MANEJO DEL SCROLL ---
     useEffect(() => {
         const onScroll = () => {
             if (!containerRef.current) return;
-
             const { top } = containerRef.current.getBoundingClientRect();
-
-            // <-- 2. La corrección clave está aquí
-            // Calculamos el progreso basándonos en la distancia de animación guardada en el ref.
-            // Ya no depende de la altura total del contenedor.
-            const scrollableDist = scrollSpaceRef.current;
-            if (scrollableDist <= 0) return;
-
-            const progress = -top / scrollableDist;
-
-            const clampedProgress = Math.min(Math.max(progress, 0), 1);
-
-            setScrollProgress(clampedProgress);
+            const prog = Math.min(Math.max(-top / scrollSpaceRef.current, 0), 1);
+            setScrollProgress(prog);
         };
-
         window.addEventListener("scroll", onScroll, { passive: true });
         onScroll();
         return () => window.removeEventListener("scroll", onScroll);
     }, []);
 
-    // --- RENDERIZADO ---
     if (!images?.length) return null;
-
-    const animCount = Math.max(images.length - 1, 0);
+    const animCount = images.length - 1;
 
     return (
         <div
@@ -90,51 +76,74 @@ const GuillotineScrollGallery = ({
                 }}
             >
                 {images.map((src, idx) => {
-                    const progressForThisSlide = (scrollProgress * animCount) - (idx - 1);
-                    const clampedProgress = Math.min(Math.max(progressForThisSlide, 0), 1);
+                    const progSlide = scrollProgress * animCount - (idx - 1);
+                    const p = Math.min(Math.max(progSlide, 0), 1);
 
-                    let clipPathValue = "polygon(100% 0%, 100% 0%, 100% 100%, 100% 100%)"; // Oculto desde la derecha
+                    let clip = "polygon(100% 0%,100% 0%,100% 100%,100% 100%)";
+                    let sepX = 0;
+                    let sepOp = 0;
 
-                    if (clampedProgress > 0 && clampedProgress < 1) {
-                        const revealWidth = 100 + diagonalAngle;
-                        const topRevealPosition = clampedProgress * revealWidth;
-                        const bottomRevealPosition = topRevealPosition - diagonalAngle;
-                        const leftTopX = 100 - topRevealPosition;
-                        const leftBottomX = 100 - bottomRevealPosition;
-                        clipPathValue = `polygon(${leftTopX}% 0%, 100% 0%, 100% 100%, ${leftBottomX}% 100%)`;
-                    } else if (clampedProgress >= 1) {
-                        clipPathValue = "polygon(0% 0%, 100% 0%, 100% 100%, 0% 100%)"; // Completamente visible
+                    if (p > 0 && p < 1) {
+                        const revealW = 100 + diagonalAngle;
+                        const topPos = p * revealW;
+                        const botPos = topPos - diagonalAngle;
+                        const leftTopX = 100 - topPos;
+                        const leftBotX = 100 - botPos;
+
+                        clip = `polygon(${leftTopX}% 0%,100% 0%,100% 100%,${leftBotX}% 100%)`;
+
+                        // calculamos en px en lugar de usar %
+                        sepX = (leftTopX / 100) * viewportWidth;
+                        sepOp = 1;
+                    } else if (p >= 1) {
+                        clip = "polygon(0% 0%,100% 0%,100% 100%,0% 100%)";
                     }
 
-                    // La primera imagen es la base, siempre visible por debajo.
-                    if (idx === 0) {
-                        clipPathValue = "none";
-                    }
+                    if (idx === 0) clip = "none";
 
                     return (
-                        <div
-                            key={idx}
-                            style={{
-                                position: "absolute",
-                                top: 0,
-                                left: 0,
-                                width: "100vw",
-                                height: "100vh",
-                                zIndex: idx,
-                                clipPath: clipPathValue,
-                                willChange: "clip-path",
-                            }}
-                        >
-                            <img
-                                src={src}
-                                alt={`slide-${idx}`}
+                        <Fragment key={idx}>
+                            <div
                                 style={{
-                                    width: "100%",
-                                    height: "100%",
-                                    objectFit: "cover",
+                                    position: "absolute",
+                                    top: 0,
+                                    left: 0,
+                                    width: "100vw",
+                                    height: "100vh",
+                                    zIndex: idx,
+                                    clipPath: clip,
+                                    willChange: "clip-path",
                                 }}
-                            />
-                        </div>
+                            >
+                                <img
+                                    src={src}
+                                    alt={`slide-${idx}`}
+                                    style={{
+                                        width: "100%",
+                                        height: "100%",
+                                        objectFit: "cover",
+                                    }}
+                                />
+                            </div>
+
+                            {idx > 0 && separatorWidth > 0 && sepOp > 0 && (
+                                <div
+                                    style={{
+                                        position: "absolute",
+                                        top: 0,
+                                        left: `${sepX}px`,
+                                        width: `${separatorWidth}px`,
+                                        height: `${separatorHeight}px`,
+                                        backgroundColor: separatorColor,
+                                        zIndex: idx,
+                                        opacity: sepOp,
+                                        willChange: "left, opacity, transform",
+                                        transformOrigin: "top left",
+                                        transform: `rotate(-${separatorAngle}deg)`,
+                                    }}
+                                />
+                            )}
+                        </Fragment>
                     );
                 })}
             </div>

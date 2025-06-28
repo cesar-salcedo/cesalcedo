@@ -7,9 +7,7 @@ import imgW from '../../assets/images/solar_system_03.jpg';
 
 
 export default function TypeB({
-    title,
-    description,
-    profit,
+
     maxScale = 1.5,
     objectPosition = "center center",
     isDesktop = false,
@@ -17,6 +15,8 @@ export default function TypeB({
     const imageH = imgH;
     const imageW = imgW;
     const src = isDesktop ? imageW : imageH;
+    const title = "Solar System";
+    const description = "Highly accurate planetary models. Venus, Uranus, Neptune, and part of Saturn are hand-painted. The Sun is fully procedural. All planets include 16K to 23K PBR textures in equirectangular format. Used by Ubisoft.";
 
 
 
@@ -26,7 +26,7 @@ export default function TypeB({
             <Description
                 title={title}
                 description={description}
-                profit={profit}
+
             />
 
 

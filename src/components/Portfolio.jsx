@@ -29,21 +29,9 @@ export default function Portfolio() {
             <h2 style={{ textAlign: "center" }}>Portfolio</h2>
             <hr style={{ width: "100%", border: "none", borderTop: "1px solid #ccc" }} />
 
-            <Elephant
-                title={"African Elephant"}
-                description={"Game-ready 3D model with 8K PBR textures, clean UVs, and a fully rigged skeleton with IK/FK chains. Balanced for real-time performance and visual fidelity across VR, AR, games, and cinematics."}
-                profit={"$8.000 profit. +50 sales"}
-
-                isDesktop={isDesktop}
-            />
+            <Elephant isDesktop={isDesktop} />
             <Mouth isDesktop={isDesktop} />
-
-            <SolarSystem
-                title={"Solar System"}
-                description={"Highly accurate planetary models. Venus, Uranus, Neptune, and part of Saturn are hand-painted. The Sun is fully procedural. All planets include 16K to 23K PBR textures in equirectangular format. Used by Ubisoft."}
-                profit={"$68,000 profit, +300 sales."}
-                isDesktop={isDesktop}
-            />
+            <SolarSystem isDesktop={isDesktop} />
             <Eye isDesktop={isDesktop} />
             <GasPlanet isDesktop={isDesktop} />
             <Rocks />

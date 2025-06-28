@@ -2,8 +2,8 @@ import React from 'react';
 import Description from '../utils/DescriptionA.jsx';
 
 //import DefocusScrollGallery from '../utils/DefocusScrollGallery.jsx';
-//import VerticalScrollGallery from '../utils/VerticalScrollGallery.jsx';
-import HorizontalScrollGalley from '../utils/HorizontalScrollCallery.jsx';
+import VerticalScrollGallery from '../utils/VerticalScrollGallery.jsx';
+//import HorizontalScrollGalley from '../utils/HorizontalScrollCallery.jsx';
 
 
 import img1 from '../../assets/images/gas_planet_01.jpg';
@@ -36,7 +36,7 @@ export default function Mouth({
                 description={description}
 
             />
-            <HorizontalScrollGalley
+            <VerticalScrollGallery
                 isDesktop={isDesktop}
                 images={imagesA}
 

@@ -2,7 +2,11 @@ import React from "react";
 import Description from '../utils/DescriptionA.jsx';
 import ImageSequenceScrubber from "../utils/ImageSequenceScrubber.jsx";
 
-export default function Rocks({ title, description }) {
+export default function Rocks() {
+
+    const title = "Procedural terrain";
+    const description = "Highly accurate planetary models. Venus, Uranus, Neptune, and part of Saturn are hand-painted. The Sun is fully procedural. All planets include 16K to 23K PBR textures in equirectangular format. Used by Ubisoft.";
+
     return (
         <div style={{ marginTop: "64px" }}>
             <Description
