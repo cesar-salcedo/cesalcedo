@@ -1,5 +1,7 @@
 // src/components/About.jsx
 import React from "react";
+import ImageZoomProgressive from "./utils/ImageZoomProgressive";
+import img1 from '../assets/images/profile_photo_02.jpg';
 
 export default function About() {
     return (
@@ -21,14 +23,17 @@ export default function About() {
                     color: "#333"
                 }}
             >
-                <p>Hello, I'm César.</p>
+                <ImageZoomProgressive src={img1} maxScale={1.1} />
+                <br />
+                <p> I'm César Salcedo,</p>
                 <p>
-                    I'm a Technical Artist and 3D Specialist with a background in Fine Arts and a strong focus on procedural workflows, simulations, shading, and high-fidelity modeling. My work bridges the gap between visual creativity and technical precision, aiming to produce assets that are both visually compelling and production-ready.
-
-                    Here you’ll find a curated selection of my projects, including cinematic simulations, photorealistic assets, and real-time models used in games, VR, and scientific visualization.
-
-                    Feel free to check out my demo reel above, explore the portfolio below, and reach out through the contact section if you'd like to collaborate or just say hello.
+                    a Technical Artist with over 10 years of experience and a passion for solving complex technical puzzles.
+                    My principle is simple: I don't just create 3D art; I design and build the procedural systems that generate it.
+                    I have validated this focus on creating efficient and scalable tools by building a successful 3D asset business, generating over $200,000 in revenue.
+                    I am now looking to apply this systems-thinking approach and my problem-solving skills in a team environment, contributing to large-scale projects.
                 </p>
+
+
 
             </div>
         </section>

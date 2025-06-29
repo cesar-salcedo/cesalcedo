@@ -4,8 +4,8 @@ import ImageSequenceScrubber from "../utils/ImageSequenceScrubber.jsx";
 
 export default function Rocks() {
 
-    const title = "Procedural terrain";
-    const description = "Highly accurate planetary models. Venus, Uranus, Neptune, and part of Saturn are hand-painted. The Sun is fully procedural. All planets include 16K to 23K PBR textures in equirectangular format. Used by Ubisoft.";
+    const title = "Procedural Terrain";
+    const description = "A collection of high-detail procedural rock formations, suitable for cliffs, crags, and steep rocky environments. Fully generated in Blender with unlimited resolution scalability. Turn any shape into terrain.";
 
     return (
         <div style={{ marginTop: "64px" }}>

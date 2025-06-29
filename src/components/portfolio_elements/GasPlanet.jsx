@@ -21,7 +21,7 @@ export default function Mouth({
     isDesktop = false
 }) {
     const title = "Planet Generator";
-    const description = "A fully procedural eye generator that creates infinite variations of iris and sclera patterns. Includes node-based materials, UV-ready exports, and a demo file for instant use. ";
+    const description = "A fluid dynamics-based simulation system designed to generate realistic gas planets. Especially useful where procedural methods fall short, this generator creates high-fidelity visuals limited only by computing power. ";
 
 
     const imagesA = [img1, img2, img3, img4, img5, img6]

@@ -16,7 +16,8 @@ export default function Mouth({
     isDesktop = false
 }) {
     const title = "Human Mouth";
-    const description = "Optimized for close-up rendering and facial animation. Features 8K textures, 16-bit displacement maps, and full compatibility with Cycles and V-Ray. Includes original modeling, UV layout, shading, rigging, and presentation.";
+    const description = "Optimized for close-up rendering and facial animation. Features 8K textures, 16-bit displacement maps, and full compatibility with Cycles and V-Ray. Includes original modeling, UV layout, shading and rigging.";
+    const profit = " Blender and Autodesk 3dsMax, + 300 sales.";
     //const imagesA = [img1, img2, img3]
     const imagesB = [img6, img5, img7, img4]
     return (
@@ -26,6 +27,7 @@ export default function Mouth({
             <Description
                 title={title}
                 description={description}
+                profit={profit}
 
             />{/*
             <HorizontalScroll

@@ -20,13 +20,14 @@ export default function TipoD({
     const src = isDesktop ? imageW : imageH;
     const title = "African Elephant";
     const description = "Game-ready 3D model with 8K PBR textures, clean UVs, and a fully rigged skeleton with IK/FK chains. Balanced for real-time performance and visual fidelity across VR, AR, games, and cinematics.";
-
+    const profit = " Blender, 3dsMax and Three.js, + 50 sales.";
 
     return (
         <div style={{ marginTop: '64px' }}>
             <Description
                 title={title}
                 description={description}
+                profit={profit}
 
             />
 

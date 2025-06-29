@@ -21,7 +21,7 @@ export default function Mouth({
 }) {
     const title = "Eye generator";
     const description = "A fully procedural eye generator that creates infinite variations of iris and sclera patterns. Includes node-based materials, UV-ready exports, and a demo file for instant use. ";
-
+    const profit = "Blender Addon. +300 sales.";
 
     const imagesA = [img1, img2, img3, img5]
     const imagesB = [img1, img2, img3, img6]
@@ -34,6 +34,7 @@ export default function Mouth({
             <Description
                 title={title}
                 description={description}
+                profit={profit}
 
             />
             <DefocusScrollGallery

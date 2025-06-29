@@ -1,6 +1,6 @@
 {
-  "short_name": "React App",
-  "name": "Create React App Sample",
+  "short_name": "Cesalcedo",
+  "name": "Cesar Salcedo Portfolio",
   "icons": [
     {
       "src": "favicon_cs.ico",
@@ -9,7 +9,6 @@
     },
     {
       "src": "android-chrome-192x192.png",
-      "type": "image/png",
       "sizes": "192x192"
     },
     {

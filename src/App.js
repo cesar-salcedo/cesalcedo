@@ -30,11 +30,15 @@ function App() {
 
         <Header />
         <Cover />
-        <AcceleratedEntry intensity={1} delay={2}>
+        <AcceleratedEntry  >
           <Portfolio />
         </AcceleratedEntry>
-        <About />
-        <Contact />
+        <AcceleratedEntry  >
+          <About />
+        </AcceleratedEntry>
+        <AcceleratedEntry  >
+          <Contact />
+        </AcceleratedEntry>
       </div>
     </Router>
   );

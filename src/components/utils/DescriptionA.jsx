@@ -13,6 +13,8 @@ export default function Description({
         <div className={styles.container}>
             <p className={styles.title}>{title}</p>
             <p className={styles.text}>{description}</p>
+            <p className={styles.text}>{profit}</p>
+
 
         </div>
     );
