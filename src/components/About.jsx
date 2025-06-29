@@ -1,7 +1,7 @@
 // src/components/About.jsx
 import React from "react";
 import ImageZoomProgressive from "./utils/ImageZoomProgressive";
-import img1 from '../assets/images/profile_photo_02.jpg';
+import img1 from '../assets/images/profile_photo_03.jpg';
 
 export default function About() {
     return (
