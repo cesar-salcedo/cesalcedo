@@ -2,9 +2,9 @@ import React, { useState, useEffect } from 'react';
 //import Mouth from './portfolio_elements/Mouth';
 import SolarSystem from './portfolio_elements/SolarSystem';
 import Elephant from './portfolio_elements/Elephant';
-import Eye from './portfolio_elements/Eye';
+//import Eye from './portfolio_elements/Eye';
 //import GasPlanet from './portfolio_elements/GasPlanet';
-import Rocks from './portfolio_elements/Rocks';
+//import Rocks from './portfolio_elements/Rocks';
 //import AcceleratedEntry from "./utils/AcceleratedEntry";
 
 // 1. Define tus componentes del portfolio en un array.
@@ -13,9 +13,9 @@ const portfolioItems = [
     { Component: Elephant, props: { /* props específicas si las hubiera */ } },
     //{ Component: Mouth, props: {} },
     { Component: SolarSystem, props: {} },
-    { Component: Eye, props: {} },
+    //{ Component: Eye, props: {} },
     //{ Component: GasPlanet, props: {} },
-    { Component: Rocks, props: { isDesktop: undefined } } // `isDesktop` no es necesaria para Rocks, se puede omitir.
+    //{ Component: Rocks, props: { isDesktop: undefined } } // `isDesktop` no es necesaria para Rocks, se puede omitir.
 ];
 
 export default function Portfolio() {
@@ -45,7 +45,7 @@ export default function Portfolio() {
                 };
 
                 // El componente Rocks no necesita la prop `isDesktop`, así que la excluimos.
-                const finalProps = Component === Rocks ? props : { ...commonProps, ...props };
+                const finalProps = Component === 17 ? props : { ...commonProps, ...props };
 
                 return (
 
