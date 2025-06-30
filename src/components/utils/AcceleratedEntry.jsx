@@ -1,7 +1,24 @@
 // AcceleratedEntry.js
-import React, { useRef, useLayoutEffect } from 'react';
+import React, {
+    useState,
+    useRef,
+    useLayoutEffect,
+    useEffect,
+    useCallback,
+    useMemo
+} from 'react';
 import PropTypes from 'prop-types';
-import './AcceleratedEntry.css';
+
+// Hook de debounce reutilizable
+function useDebouncedCallback(fn, delay) {
+    const timeoutRef = useRef(null);
+    const callback = useCallback((...args) => {
+        clearTimeout(timeoutRef.current);
+        timeoutRef.current = setTimeout(() => fn(...args), delay);
+    }, [fn, delay]);
+    useEffect(() => () => clearTimeout(timeoutRef.current), []);
+    return callback;
+}
 
 export default function AcceleratedEntry({
     children,
@@ -10,57 +27,113 @@ export default function AcceleratedEntry({
 }) {
     const placeholderRef = useRef(null);
     const contentRef = useRef(null);
+    const [contentHeight, setContentHeight] = useState('auto');
 
-    // Hook corregido para ser más robusto
-    useLayoutEffect(() => {
-        const contentNode = contentRef.current;
-        if (!contentNode) return undefined;
+    const isIntersectingRef = useRef(false);
+    const rafIdRef = useRef(null);
 
-        let animationFrameId = null;
+    // Métricas de viewport y puntos de animación
+    const metricsRef = useRef({
+        viewportHeight: window.innerHeight,
+        start: window.innerHeight,
+        end: window.innerHeight * 0.4,
+        distance: window.innerHeight * 0.6
+    });
 
-        const ro = new ResizeObserver(entries => {
-            // Cancelamos cualquier frame pendiente para evitar trabajo innecesario.
-            if (animationFrameId) {
-                cancelAnimationFrame(animationFrameId);
-            }
+    // Intensidad y desplazamiento máximo (memoizado)
+    const clampedIntensity = Math.max(0, Math.min(1, intensity));
+    const maxTranslateY = useMemo(
+        () => 50 + 200 * clampedIntensity,
+        [clampedIntensity]
+    );
 
-            // Programamos la actualización de la altura para el próximo frame de animación.
-            // Esto resuelve el error del "loop" al separar la lectura (observador)
-            // de la escritura en el DOM.
-            animationFrameId = requestAnimationFrame(() => {
-                if (entries[0]) {
-                    const contentHeight = entries[0].contentRect.height;
-                    if (placeholderRef.current) {
-                        placeholderRef.current.style.height = `${contentHeight}px`;
-                    }
-                }
-            });
-        });
-
-        ro.observe(contentNode);
-
-        // Función de limpieza al desmontar el componente
-        return () => {
-            if (animationFrameId) {
-                cancelAnimationFrame(animationFrameId);
-            }
-            ro.disconnect();
+    // Actualiza las métricas en bloque
+    const updateMetrics = useCallback(() => {
+        const vh = window.innerHeight;
+        metricsRef.current = {
+            viewportHeight: vh,
+            start: vh,
+            end: vh * 0.4,
+            distance: vh * 0.6
         };
-    }, []); // El array de dependencias vacío se mantiene
+    }, []);
 
-    // ... resto del componente sin cambios ...
-    const clampedIntensity = Math.min(1, Math.max(0, intensity));
+    // Debounce para resize
+    const onResize = useDebouncedCallback(() => {
+        updateMetrics();
+        onScroll();
+    }, 100);
+
+    // Handler de scroll, con rAF
+    const onScroll = useCallback(() => {
+        if (
+            !isIntersectingRef.current ||
+            !placeholderRef.current ||
+            !contentRef.current
+        ) {
+            return;
+        }
+
+        if (rafIdRef.current) cancelAnimationFrame(rafIdRef.current);
+
+        rafIdRef.current = requestAnimationFrame(() => {
+            const { top } = placeholderRef.current.getBoundingClientRect();
+            const { start, distance } = metricsRef.current;
+            const progress = Math.min(1, Math.max(0, (start - top) / distance));
+
+            const node = contentRef.current;
+            node.style.opacity = progress;
+            node.style.transform = `translateY(${maxTranslateY * (1 - progress)}px)`;
+        });
+    }, [maxTranslateY]);
+
+    // Observador de tamaño (ResizeObserver)
+    useLayoutEffect(() => {
+        const ro = new ResizeObserver(entries => {
+            const h = entries[0]?.contentRect.height ?? 0;
+            setContentHeight(prev => (prev === h ? prev : h));
+        });
+        contentRef.current && ro.observe(contentRef.current);
+        return () => ro.disconnect();
+    }, []);
+
+    // Observador de visibilidad (IntersectionObserver)
+    useEffect(() => {
+        const io = new IntersectionObserver(
+            ([entry]) => {
+                isIntersectingRef.current = entry.isIntersecting;
+            },
+            { threshold: 0 }
+        );
+        placeholderRef.current && io.observe(placeholderRef.current);
+        return () => io.disconnect();
+    }, []);
+
+    // Scroll & resize listeners
+    useEffect(() => {
+        const node = contentRef.current;
+        if (node) node.style.willChange = 'opacity, transform';
+
+        // disparo inicial para setear estado
+        onScroll();
+
+        window.addEventListener('scroll', onScroll, { passive: true });
+        window.addEventListener('resize', onResize, { passive: true });
+
+        return () => {
+            window.removeEventListener('scroll', onScroll);
+            window.removeEventListener('resize', onResize);
+            if (rafIdRef.current) cancelAnimationFrame(rafIdRef.current);
+        };
+    }, [onScroll, onResize]);
 
     return (
         <div
             ref={placeholderRef}
-            className={`accelerated-entry-placeholder ${className}`}
+            style={{ height: contentHeight, position: 'relative' }}
+            className={className}
         >
-            <div
-                ref={contentRef}
-                className="accelerated-entry-content"
-                style={{ '--intensity': clampedIntensity }}
-            >
+            <div ref={contentRef} style={{ position: 'sticky', top: 0 }}>
                 {children}
             </div>
         </div>

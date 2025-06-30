@@ -1,59 +1,14 @@
-/* AcceleratedEntry.css */
+.accelerated-entry-content-fallback {
+  /* Estado inicial: invisible y desplazado */
+  opacity: 0;
+  transform: translateY(calc(50px + 200px * var(--intensity)));
 
-/*
-  1. Definimos los keyframes de la animación una sola vez.
-  Usamos la variable --intensity para replicar la lógica original
-  de forma declarativa.
-*/
-@keyframes fade-in-up {
-  from {
-    opacity: 0;
-    transform: translateY(calc(50px + 200px * var(--intensity)));
-  }
-
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
+  /* Definimos la transición que se activará cuando se añada la clase 'is-visible' */
+  transition: opacity 0.8s ease-out, transform 0.8s ease-out;
 }
 
-/*
-  2. El placeholder solo necesita ser relativo para que
-  el contenido con position: sticky funcione correctamente.
-*/
-.accelerated-entry-placeholder {
-  position: relative;
-  /* La altura la establece el ResizeObserver en JS para evitar CLS */
-}
-
-/*
-  3. El contenido real que se animará.
-*/
-.accelerated-entry-content {
-  /* Mantenemos la adherencia para que se quede fijo mientras se anima */
-  position: sticky;
-  top: 0;
-
-  /*
-    ESTA ES LA CLAVE DEL RENDIMIENTO:
-    - Vinculamos la animación al scroll, sin necesidad de JS.
-    - El navegador optimiza esto en el hilo del compositor (GPU).
-  */
-  animation: fade-in-up linear;
-  animation-timeline: view();
-  /* Vincula la animación a la visibilidad del elemento en el viewport */
-
-  /*
-    Definimos el rango en el que se ejecuta la animación.
-    - Comienza cuando el elemento entra en el viewport (entry 0%).
-    - Termina cuando ha recorrido el 60% del viewport (entry 60%).
-    Esto reemplaza los cálculos manuales con getBoundingClientRect.
-  */
-  animation-range: entry 0% entry 60%;
-
-  /*
-    Asegura que el elemento mantenga el estado final de la animación
-    (opacity: 1, transform: 0) cuando termina, evitando "flashes".
-  */
-  animation-fill-mode: both;
+.accelerated-entry-content-fallback.is-visible {
+  /* Estado final: visible y en su posición original */
+  opacity: 1;
+  transform: translateY(0);
 }
