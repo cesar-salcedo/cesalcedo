@@ -30,15 +30,14 @@ function App() {
 
         <Header />
         <Cover />
-        <AcceleratedEntry  >
-          <Portfolio />
-        </AcceleratedEntry>
-        <AcceleratedEntry  >
-          <About />
-        </AcceleratedEntry>
-        <AcceleratedEntry  >
-          <Contact />
-        </AcceleratedEntry>
+
+        <Portfolio />
+
+        <About />
+
+
+        <Contact />
+
       </div>
     </Router>
   );
