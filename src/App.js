@@ -9,7 +9,7 @@ import Cover from "./components/Cover";
 import Portfolio from "./components/Portfolio";
 import About from "./components/About";
 import Contact from "./components/Contact";
-import AcceleratedEntry from "./components/utils/AcceleratedEntry";
+//import AcceleratedEntry from "./components/utils/AcceleratedEntry";
 
 function App() {
   return (
