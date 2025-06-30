@@ -1,89 +1,132 @@
 // AcceleratedEntry.jsx
-import React, { useRef, useLayoutEffect } from 'react';
+import React, { useState, useLayoutEffect, useEffect, useRef } from 'react';
 import PropTypes from 'prop-types';
 
-/**
- * Sticky entry that fades & translates from bottom of the viewport
- * until it reaches `offset` * 100% of the screen height.
- *
- * – No React state updates per frame (direct DOM writes).
- * – Resize/scroll listeners cleaned up correctly.
- * – Uses GPU-accelerated translate3d.
- */
-const AcceleratedEntry = ({ children, offset = 0.4 }) => {
-    const containerRef = useRef(null);
-    const ticking = useRef(false);
+export default function AcceleratedEntry({ children, intensity = 1.0, className = '' }) {
+    const placeholderRef = useRef(null);
+    const contentRef = useRef(null);
 
+    // State para mantener la altura del contenido
+    const [contentHeight, setContentHeight] = useState('auto');
+
+    // Refs para control de visibilidad y animación
+    const isIntersectingRef = useRef(false);
+    const animationFrameId = useRef(null);
+
+    // Intensidad ajustada
+    const clampedIntensity = Math.max(0, Math.min(1, intensity));
+    const maxTranslateY = 50 + 200 * clampedIntensity;
+
+    // --- EFECTO 1: Observador de tamaño ---
     useLayoutEffect(() => {
-        const el = containerRef.current;
-        if (!el) return;
-
-        const vh = () => window.innerHeight;
-
-
-        const updatePosition = () => {
-            ticking.current = false;
-            const rect = el.getBoundingClientRect();
-            const height = vh();
-            const start = height * offset;
-            const end = height;
-            const totalDist = end - start;
-            let translateY = rect.top - start;
-            let opacity;
-
-            if (rect.top >= end) {
-                // Below viewport
-                translateY = totalDist;
-                opacity = 0;
-            } else if (rect.top <= start) {
-                // Above threshold
-                translateY = 0;
-                opacity = 1;
-            } else {
-                // In between
-                opacity = (height - rect.top) / totalDist;
+        const observer = new ResizeObserver(entries => {
+            if (entries[0]) {
+                setContentHeight(entries[0].contentRect.height);
             }
+        });
 
-            el.style.transform = `translate3d(0, ${translateY}px, 0)`;
-            el.style.opacity = opacity;
-        };
-
-        const onScroll = () => {
-            if (!ticking.current) {
-                window.requestAnimationFrame(updatePosition);
-                ticking.current = true;
-            }
-        };
-
-        const onResize = () => {
-            window.requestAnimationFrame(updatePosition);
-        };
-
-        window.addEventListener('scroll', onScroll, { passive: true });
-        window.addEventListener('resize', onResize);
-
-        // Initial positioning
-        updatePosition();
+        const node = contentRef.current;
+        if (node) observer.observe(node);
 
         return () => {
-            window.removeEventListener('scroll', onScroll);
-            window.removeEventListener('resize', onResize);
+            if (node) observer.unobserve(node);
+            observer.disconnect();
         };
-    }, [offset]);
+    }, []);
+
+    // --- EFECTO 2: Observador de visibilidad ---
+    useEffect(() => {
+        const observer = new IntersectionObserver(
+            ([entry]) => {
+                isIntersectingRef.current = entry.isIntersecting;
+            },
+            { threshold: 0 }
+        );
+
+        const node = placeholderRef.current;
+        if (node) observer.observe(node);
+
+        return () => {
+            if (node) observer.unobserve(node);
+        };
+    }, []);
+
+    // --- EFECTO 3: Animación por scroll con manipulación directa del DOM ---
+    useEffect(() => {
+        const node = contentRef.current;
+        if (node) {
+            // Promocionar la capa de composición para suavizar la animación
+            node.style.willChange = 'opacity, transform';
+        }
+
+        // Variables de cálculo (se recalculan en resize)
+        let viewportHeight = window.innerHeight;
+        let animationStartPoint = viewportHeight;
+        let animationEndPoint = viewportHeight * 0.4;
+        let animationDistance = animationStartPoint - animationEndPoint;
+
+        const updateMetrics = () => {
+            viewportHeight = window.innerHeight;
+            animationStartPoint = viewportHeight;
+            animationEndPoint = viewportHeight * 0.4;
+            animationDistance = animationStartPoint - animationEndPoint;
+        };
+
+        const handleScroll = () => {
+            if (!isIntersectingRef.current || !placeholderRef.current) return;
+
+            // Cancelar frame existente
+            if (animationFrameId.current) {
+                cancelAnimationFrame(animationFrameId.current);
+            }
+
+            animationFrameId.current = requestAnimationFrame(() => {
+                const { top } = placeholderRef.current.getBoundingClientRect();
+                const rawProgress = (animationStartPoint - top) / animationDistance;
+                const progress = Math.max(0, Math.min(1, rawProgress));
+
+                if (node) {
+                    node.style.opacity = progress;
+                    node.style.transform = `translateY(${maxTranslateY * (1 - progress)}px`;
+                }
+            });
+        };
+
+        // Inicializa estado y listeners
+        handleScroll();
+        window.addEventListener('scroll', handleScroll, { passive: true });
+        window.addEventListener('resize', () => {
+            updateMetrics();
+            handleScroll();
+        }, { passive: true });
+
+        return () => {
+            window.removeEventListener('scroll', handleScroll);
+            window.removeEventListener('resize', updateMetrics);
+            if (animationFrameId.current) {
+                cancelAnimationFrame(animationFrameId.current);
+            }
+        };
+    }, [maxTranslateY]);
 
     return (
         <div
-            ref={containerRef}
-            style={{ willChange: 'transform, opacity' }}
+            ref={placeholderRef}
+            style={{ height: `${contentHeight}px`, position: 'relative' }}
+            className={className}
         >
-            {children}
+            <div
+                ref={contentRef}
+                style={{ position: 'sticky', top: 0 }}
+            >
+                {children}
+            </div>
         </div>
     );
-};
+}
 
 AcceleratedEntry.propTypes = {
     children: PropTypes.node.isRequired,
-    offset: PropTypes.number,
+    intensity: PropTypes.number,
+    className: PropTypes.string,
 };
-
-export default AcceleratedEntry;
