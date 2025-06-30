@@ -5,7 +5,7 @@ import Elephant from './portfolio_elements/Elephant';
 //import Eye from './portfolio_elements/Eye';
 //import GasPlanet from './portfolio_elements/GasPlanet';
 //import Rocks from './portfolio_elements/Rocks';
-//import AcceleratedEntry from "./utils/AcceleratedEntry";
+import AcceleratedEntry from "./utils/AcceleratedEntry";
 
 // 1. Define tus componentes del portfolio en un array.
 //    Esto hace que sea mucho más fácil añadirlos, eliminarlos o reordenarlos.
@@ -48,8 +48,8 @@ export default function Portfolio() {
                 const finalProps = Component === 17 ? props : { ...commonProps, ...props };
 
                 return (
-
-                    <Component {...finalProps} />
+                    <AcceleratedEntry><Component {...finalProps} />
+                    </AcceleratedEntry>
 
                 );
             })}
