@@ -37,6 +37,7 @@ export default function Mouth({
 
             />
             <VerticalScrollGallery
+                scrollVelocity={2}
                 isDesktop={isDesktop}
                 images={imagesA}
 
