@@ -1,9 +1,9 @@
 import React, { useState, useEffect } from 'react';
-import Mouth from './portfolio_elements/Mouth';
+//import Mouth from './portfolio_elements/Mouth';
 import SolarSystem from './portfolio_elements/SolarSystem';
 import Elephant from './portfolio_elements/Elephant';
 import Eye from './portfolio_elements/Eye';
-import GasPlanet from './portfolio_elements/GasPlanet';
+//import GasPlanet from './portfolio_elements/GasPlanet';
 import Rocks from './portfolio_elements/Rocks';
 //import AcceleratedEntry from "./utils/AcceleratedEntry";
 
@@ -11,11 +11,11 @@ import Rocks from './portfolio_elements/Rocks';
 //    Esto hace que sea mucho más fácil añadirlos, eliminarlos o reordenarlos.
 const portfolioItems = [
     { Component: Elephant, props: { /* props específicas si las hubiera */ } },
-    { Component: Mouth, props: {} },
+    //{ Component: Mouth, props: {} },
     { Component: SolarSystem, props: {} },
     { Component: Eye, props: {} },
-    { Component: GasPlanet, props: {} },
-    //{ Component: Rocks, props: { isDesktop: undefined } } // `isDesktop` no es necesaria para Rocks, se puede omitir.
+    //{ Component: GasPlanet, props: {} },
+    { Component: Rocks, props: { isDesktop: undefined } } // `isDesktop` no es necesaria para Rocks, se puede omitir.
 ];
 
 export default function Portfolio() {
