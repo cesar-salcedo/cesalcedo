@@ -15,7 +15,7 @@ const portfolioItems = [
     { Component: SolarSystem, props: {} },
     { Component: Eye, props: {} },
     { Component: GasPlanet, props: {} },
-    { Component: Rocks, props: { isDesktop: undefined } } // `isDesktop` no es necesaria para Rocks, se puede omitir.
+    //{ Component: Rocks, props: { isDesktop: undefined } } // `isDesktop` no es necesaria para Rocks, se puede omitir.
 ];
 
 export default function Portfolio() {
