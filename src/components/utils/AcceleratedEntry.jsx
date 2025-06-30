@@ -1,143 +1,147 @@
-import React, { useState, useLayoutEffect, useEffect, useRef } from 'react';
+// AcceleratedEntry.js
+import React, {
+    useState,
+    useRef,
+    useLayoutEffect,
+    useEffect,
+    useCallback,
+    useMemo
+} from 'react';
 import PropTypes from 'prop-types';
 
-export default function AcceleratedEntry({ children, intensity = 1.0, className = '' }) {
+// Hook de debounce reutilizable
+function useDebouncedCallback(fn, delay) {
+    const timeoutRef = useRef(null);
+    const callback = useCallback((...args) => {
+        clearTimeout(timeoutRef.current);
+        timeoutRef.current = setTimeout(() => fn(...args), delay);
+    }, [fn, delay]);
+    useEffect(() => () => clearTimeout(timeoutRef.current), []);
+    return callback;
+}
+
+export default function AcceleratedEntry({
+    children,
+    intensity = 1.0,
+    className = ''
+}) {
     const placeholderRef = useRef(null);
     const contentRef = useRef(null);
-
-    // Estado para mantener la altura del contenido
     const [contentHeight, setContentHeight] = useState('auto');
 
-    // Refs para control de visibilidad y animación
     const isIntersectingRef = useRef(false);
-    const animationFrameId = useRef(null);
+    const rafIdRef = useRef(null);
 
-    // Intensidad ajustada para la animación
+    // Métricas de viewport y puntos de animación
+    const metricsRef = useRef({
+        viewportHeight: window.innerHeight,
+        start: window.innerHeight,
+        end: window.innerHeight * 0.4,
+        distance: window.innerHeight * 0.6
+    });
+
+    // Intensidad y desplazamiento máximo (memoizado)
     const clampedIntensity = Math.max(0, Math.min(1, intensity));
-    const maxTranslateY = 50 + 200 * clampedIntensity;
+    const maxTranslateY = useMemo(
+        () => 50 + 200 * clampedIntensity,
+        [clampedIntensity]
+    );
 
-    // **Efecto 1: Observador de tamaño**
-    useLayoutEffect(() => {
-        const observer = new ResizeObserver(entries => {
-            if (entries[0]) {
-                setContentHeight(entries[0].contentRect.height);
-            }
-        });
-
-        const node = contentRef.current;
-        if (node) observer.observe(node);
-
-        return () => {
-            if (node) observer.unobserve(node);
-            observer.disconnect();
+    // Actualiza las métricas en bloque
+    const updateMetrics = useCallback(() => {
+        const vh = window.innerHeight;
+        metricsRef.current = {
+            viewportHeight: vh,
+            start: vh,
+            end: vh * 0.4,
+            distance: vh * 0.6
         };
     }, []);
 
-    // **Efecto 2: Observador de visibilidad**
+    // Debounce para resize
+    const onResize = useDebouncedCallback(() => {
+        updateMetrics();
+        onScroll();
+    }, 100);
+
+    // Handler de scroll, con rAF
+    const onScroll = useCallback(() => {
+        if (
+            !isIntersectingRef.current ||
+            !placeholderRef.current ||
+            !contentRef.current
+        ) {
+            return;
+        }
+
+        if (rafIdRef.current) cancelAnimationFrame(rafIdRef.current);
+
+        rafIdRef.current = requestAnimationFrame(() => {
+            const { top } = placeholderRef.current.getBoundingClientRect();
+            const { start, distance } = metricsRef.current;
+            const progress = Math.min(1, Math.max(0, (start - top) / distance));
+
+            const node = contentRef.current;
+            node.style.opacity = progress;
+            node.style.transform = `translateY(${maxTranslateY * (1 - progress)}px)`;
+        });
+    }, [maxTranslateY]);
+
+    // Observador de tamaño (ResizeObserver)
+    useLayoutEffect(() => {
+        const ro = new ResizeObserver(entries => {
+            const h = entries[0]?.contentRect.height ?? 0;
+            setContentHeight(prev => (prev === h ? prev : h));
+        });
+        contentRef.current && ro.observe(contentRef.current);
+        return () => ro.disconnect();
+    }, []);
+
+    // Observador de visibilidad (IntersectionObserver)
     useEffect(() => {
-        const observer = new IntersectionObserver(
+        const io = new IntersectionObserver(
             ([entry]) => {
                 isIntersectingRef.current = entry.isIntersecting;
             },
             { threshold: 0 }
         );
-
-        const node = placeholderRef.current;
-        if (node) observer.observe(node);
-
-        return () => {
-            if (node) observer.unobserve(node);
-        };
+        placeholderRef.current && io.observe(placeholderRef.current);
+        return () => io.disconnect();
     }, []);
 
-    // **Efecto 3: Animación por scroll con manipulación directa del DOM**
+    // Scroll & resize listeners
     useEffect(() => {
         const node = contentRef.current;
-        if (node) {
-            // Promociona la capa de composición para suavizar la animación
-            node.style.willChange = 'opacity, transform';
-        }
+        if (node) node.style.willChange = 'opacity, transform';
 
-        // Variables de cálculo (se recalculan en resize)
-        let viewportHeight = window.innerHeight;
-        let animationStartPoint = viewportHeight;
-        let animationEndPoint = viewportHeight * 0.4;
-        let animationDistance = animationStartPoint - animationEndPoint;
+        // disparo inicial para setear estado
+        onScroll();
 
-        // Función para actualizar métricas
-        const updateMetrics = () => {
-            viewportHeight = window.innerHeight;
-            animationStartPoint = viewportHeight;
-            animationEndPoint = viewportHeight * 0.4;
-            animationDistance = animationStartPoint - animationEndPoint;
-        };
+        window.addEventListener('scroll', onScroll, { passive: true });
+        window.addEventListener('resize', onResize, { passive: true });
 
-        // Función para manejar el scroll
-        const handleScroll = () => {
-            if (!isIntersectingRef.current || !placeholderRef.current) return;
-
-            // Cancelar frame existente
-            if (animationFrameId.current) {
-                cancelAnimationFrame(animationFrameId.current);
-            }
-
-            animationFrameId.current = requestAnimationFrame(() => {
-                const { top } = placeholderRef.current.getBoundingClientRect();
-                const rawProgress = (animationStartPoint - top) / animationDistance;
-                const progress = Math.max(0, Math.min(1, rawProgress));
-
-                if (node) {
-                    node.style.opacity = progress;
-                    node.style.transform = `translateY(${maxTranslateY * (1 - progress)}px)`;
-                }
-            });
-        };
-
-        // Inicializa estado y listeners
-        handleScroll();
-        window.addEventListener('scroll', handleScroll, { passive: true });
-
-        // Debounce para el evento de resize
-        let resizeTimeout;
-        const handleResize = () => {
-            clearTimeout(resizeTimeout);
-            resizeTimeout = setTimeout(() => {
-                updateMetrics();
-                handleScroll();
-            }, 100); // Tiempo de debounce ajustable (100ms)
-        };
-        window.addEventListener('resize', handleResize, { passive: true });
-
-        // Limpieza de eventos y animaciones
         return () => {
-            window.removeEventListener('scroll', handleScroll);
-            window.removeEventListener('resize', handleResize);
-            if (animationFrameId.current) {
-                cancelAnimationFrame(animationFrameId.current);
-            }
+            window.removeEventListener('scroll', onScroll);
+            window.removeEventListener('resize', onResize);
+            if (rafIdRef.current) cancelAnimationFrame(rafIdRef.current);
         };
-    }, [maxTranslateY]);
+    }, [onScroll, onResize]);
 
-    // Renderizado del componente
     return (
         <div
             ref={placeholderRef}
-            style={{ height: `${contentHeight}px`, position: 'relative' }}
+            style={{ height: contentHeight, position: 'relative' }}
             className={className}
         >
-            <div
-                ref={contentRef}
-                style={{ position: 'sticky', top: 0 }}
-            >
+            <div ref={contentRef} style={{ position: 'sticky', top: 0 }}>
                 {children}
             </div>
         </div>
     );
 }
 
-// Definición de PropTypes
 AcceleratedEntry.propTypes = {
     children: PropTypes.node.isRequired,
     intensity: PropTypes.number,
-    className: PropTypes.string,
+    className: PropTypes.string
 };
