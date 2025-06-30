@@ -1,6 +1,5 @@
 // AcceleratedEntry.js
 import React, {
-    useState,
     useRef,
     useLayoutEffect,
     useEffect,
@@ -14,7 +13,7 @@ function useDebouncedCallback(fn, delay) {
     const timeoutRef = useRef(null);
     const callback = useCallback((...args) => {
         clearTimeout(timeoutRef.current);
-        timeoutRef.current = setTimeout(() => fn(...args), delay);
+        timeoutRef.current = window.setTimeout(() => fn(...args), delay);
     }, [fn, delay]);
     useEffect(() => () => clearTimeout(timeoutRef.current), []);
     return callback;
@@ -27,33 +26,28 @@ export default function AcceleratedEntry({
 }) {
     const placeholderRef = useRef(null);
     const contentRef = useRef(null);
-    const [contentHeight, setContentHeight] = useState('auto');
-
+    const contentHeightRef = useRef(0);
     const isIntersectingRef = useRef(false);
     const rafIdRef = useRef(null);
 
-    // Métricas de viewport y puntos de animación
+    // Métricas de viewport y animación
     const metricsRef = useRef({
-        viewportHeight: window.innerHeight,
         start: window.innerHeight,
-        end: window.innerHeight * 0.4,
         distance: window.innerHeight * 0.6
     });
 
     // Intensidad y desplazamiento máximo (memoizado)
-    const clampedIntensity = Math.max(0, Math.min(1, intensity));
+    const clampedIntensity = Math.min(1, Math.max(0, intensity));
     const maxTranslateY = useMemo(
         () => 50 + 200 * clampedIntensity,
         [clampedIntensity]
     );
 
-    // Actualiza las métricas en bloque
+    // Actualiza las métricas al cambiar tamaño de ventana
     const updateMetrics = useCallback(() => {
         const vh = window.innerHeight;
         metricsRef.current = {
-            viewportHeight: vh,
             start: vh,
-            end: vh * 0.4,
             distance: vh * 0.6
         };
     }, []);
@@ -64,7 +58,7 @@ export default function AcceleratedEntry({
         onScroll();
     }, 100);
 
-    // Handler de scroll, con rAF
+    // Función de scroll con rAF
     const onScroll = useCallback(() => {
         if (
             !isIntersectingRef.current ||
@@ -73,11 +67,10 @@ export default function AcceleratedEntry({
         ) {
             return;
         }
-
         if (rafIdRef.current) cancelAnimationFrame(rafIdRef.current);
 
         rafIdRef.current = requestAnimationFrame(() => {
-            const { top } = placeholderRef.current.getBoundingClientRect();
+            const top = placeholderRef.current.getBoundingClientRect().top;
             const { start, distance } = metricsRef.current;
             const progress = Math.min(1, Math.max(0, (start - top) / distance));
 
@@ -87,34 +80,46 @@ export default function AcceleratedEntry({
         });
     }, [maxTranslateY]);
 
-    // Observador de tamaño (ResizeObserver)
+    // Observador de tamaño: actualiza placeholder height dentro de rAF para romper el ciclo
     useLayoutEffect(() => {
+        if (!contentRef.current) return;
+
         const ro = new ResizeObserver(entries => {
-            const h = entries[0]?.contentRect.height ?? 0;
-            setContentHeight(prev => (prev === h ? prev : h));
+            const h = entries[0]?.contentRect.height || 0;
+            if (contentHeightRef.current !== h) {
+                contentHeightRef.current = h;
+                // Actualiza el estilo en el siguiente frame
+                window.requestAnimationFrame(() => {
+                    if (placeholderRef.current) {
+                        placeholderRef.current.style.height = `${h}px`;
+                    }
+                });
+            }
         });
-        contentRef.current && ro.observe(contentRef.current);
+
+        ro.observe(contentRef.current);
         return () => ro.disconnect();
     }, []);
 
-    // Observador de visibilidad (IntersectionObserver)
+    // Observador de visibilidad
     useEffect(() => {
+        if (!placeholderRef.current) return;
         const io = new IntersectionObserver(
             ([entry]) => {
                 isIntersectingRef.current = entry.isIntersecting;
             },
             { threshold: 0 }
         );
-        placeholderRef.current && io.observe(placeholderRef.current);
+        io.observe(placeholderRef.current);
         return () => io.disconnect();
     }, []);
 
-    // Scroll & resize listeners
+    // Listeners de scroll y resize
     useEffect(() => {
-        const node = contentRef.current;
-        if (node) node.style.willChange = 'opacity, transform';
-
-        // disparo inicial para setear estado
+        if (contentRef.current) {
+            contentRef.current.style.willChange = 'opacity, transform';
+        }
+        updateMetrics();
         onScroll();
 
         window.addEventListener('scroll', onScroll, { passive: true });
@@ -125,15 +130,23 @@ export default function AcceleratedEntry({
             window.removeEventListener('resize', onResize);
             if (rafIdRef.current) cancelAnimationFrame(rafIdRef.current);
         };
-    }, [onScroll, onResize]);
+    }, [onScroll, onResize, updateMetrics]);
 
     return (
         <div
             ref={placeholderRef}
-            style={{ height: contentHeight, position: 'relative' }}
             className={className}
+            style={{ position: 'relative', height: `${contentHeightRef.current}px` }}
         >
-            <div ref={contentRef} style={{ position: 'sticky', top: 0 }}>
+            <div
+                ref={contentRef}
+                style={{
+                    position: 'sticky',
+                    top: 0,
+                    opacity: 0,
+                    transform: `translateY(${maxTranslateY}px)`
+                }}
+            >
                 {children}
             </div>
         </div>
