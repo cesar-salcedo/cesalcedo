@@ -1,70 +1,23 @@
-import React, { useRef, useEffect, useState, useCallback } from "react";
+import React, { useRef } from "react"; // De nuevo, reducimos las importaciones
+import { useScrollProgress } from "../hooks/useScrollProgress";
 
 const HorizontalScrollGallery = ({ images, scrollVelocity = 1, isDesktop = false }) => {
     const containerRef = useRef(null);
+
+    // 1. La misma lógica para calcular la duración para el hook.
     const resScrollVelocity = isDesktop ? scrollVelocity * 3 : scrollVelocity;
+    const animCount = Math.max(images.length - 1, 0);
+    const durationInVh = animCount / resScrollVelocity;
 
-    // --- ESTADO MODIFICADO ---
-    // Reemplazamos 'scrollX' y 'viewportWidth' por un único estado de progreso.
-    const [scrollProgress, setScrollProgress] = useState(0);
-    const [containerHeight, setContainerHeight] = useState(0);
+    // 2. Usamos el hook.
+    const { scrollProgress, containerHeight } = useScrollProgress(containerRef, {
+        durationInVh: durationInVh,
+    });
 
-    // --- CÁLCULO DE DIMENSIONES (Sin cambios funcionales, solo limpieza) ---
-    const updateDims = useCallback(() => {
-        const vw = window.innerWidth;
-        const vh = window.innerHeight;
-
-        const perSlide = vw / resScrollVelocity;
-        const animCount = Math.max(images.length - 1, 0);
-        const totalScrollDistance = animCount * perSlide;
-
-        setContainerHeight(totalScrollDistance + vh);
-    }, [images.length, resScrollVelocity]);
-
-    useEffect(() => {
-        updateDims();
-        window.addEventListener("resize", updateDims);
-        return () => window.removeEventListener("resize", updateDims);
-    }, [updateDims]);
+    // --- Toda la lógica manual de scroll y altura ha sido eliminada. ---
 
 
-    // --- MANEJO DEL SCROLL (LÓGICA COMPLETAMENTE REFACTORIZADA) ---
-    useEffect(() => {
-        let animationFrameId;
-
-        const onScroll = () => {
-            if (!containerRef.current) return;
-
-            // 1. Obtenemos la posición precisa relativa al viewport.
-            const rect = containerRef.current.getBoundingClientRect();
-
-            // 2. Calculamos la distancia total que se puede scrollear.
-            const scrollableDistance = containerHeight - window.innerHeight;
-            if (scrollableDistance <= 0) return; // Evitar división por cero si no hay scroll.
-
-            // 3. Calculamos el progreso normalizado (0 a 1).
-            const progress = Math.max(0, Math.min(1, -rect.top / scrollableDistance));
-
-            // 4. Actualizamos el estado.
-            setScrollProgress(progress);
-        };
-
-        const onScrollWithRaf = () => {
-            if (animationFrameId) cancelAnimationFrame(animationFrameId);
-            animationFrameId = requestAnimationFrame(onScroll);
-        };
-
-        window.addEventListener("scroll", onScrollWithRaf, { passive: true });
-        onScroll();
-
-        return () => {
-            window.removeEventListener("scroll", onScrollWithRaf);
-            if (animationFrameId) cancelAnimationFrame(animationFrameId);
-        };
-    }, [containerHeight]); // La dependencia es solo la altura total.
-
-
-    // --- RENDERIZADO (Adaptado para usar 'scrollProgress') ---
+    // --- RENDERIZADO (Sin cambios en la lógica de animación) ---
     if (!images?.length) return null;
 
     return (
@@ -95,24 +48,18 @@ const HorizontalScrollGallery = ({ images, scrollVelocity = 1, isDesktop = false
                         );
                     }
 
-                    // --- LÓGICA DE ANIMACIÓN REVISADA ---
-                    const animCount = images.length - 1;
                     const progressPerSlide = 1 / animCount;
-
                     const startProgress = (idx - 1) * progressPerSlide;
                     const endProgress = idx * progressPerSlide;
 
                     let x;
-                    const vw = window.innerWidth;
+                    const vw = typeof window !== 'undefined' ? window.innerWidth : 0;
 
                     if (scrollProgress <= startProgress) {
-                        // Antes, la imagen está a la derecha.
                         x = vw;
                     } else if (scrollProgress >= endProgress) {
-                        // Después, la imagen está en su sitio.
                         x = 0;
                     } else {
-                        // Durante la animación, se interpola su posición.
                         const localProgress = (scrollProgress - startProgress) / progressPerSlide;
                         x = vw - (localProgress * vw);
                     }
@@ -121,8 +68,7 @@ const HorizontalScrollGallery = ({ images, scrollVelocity = 1, isDesktop = false
                         <div
                             key={idx}
                             style={{
-                                position: "absolute",
-                                top: 0, left: 0,
+                                position: "absolute", top: 0, left: 0,
                                 width: "100vw", height: "100vh",
                                 zIndex: idx,
                                 transform: `translateX(${x}px)`,

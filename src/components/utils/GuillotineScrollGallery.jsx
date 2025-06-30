@@ -1,4 +1,5 @@
-import React, { useRef, useEffect, useState, useCallback, Fragment } from "react";
+import React, { useRef, Fragment, useState, useEffect } from "react";
+import { useScrollProgress } from "../hooks/useScrollProgress"; // Importamos el hook genérico
 
 const GuillotineScrollGallery = ({
     images,
@@ -8,85 +9,47 @@ const GuillotineScrollGallery = ({
     separatorColor = "white",
 }) => {
     const containerRef = useRef(null);
-    const scrollSpaceRef = useRef(0);
-    const [containerHeight, setContainerHeight] = useState(0);
-    const [scrollProgress, setScrollProgress] = useState(0);
-    const [separatorAngle, setSeparatorAngle] = useState(0);
-    const [separatorHeight, setSeparatorHeight] = useState(0);
+    const animCount = Math.max(images.length - 1, 0);
 
-    const updateDimensions = useCallback(() => {
-        const vw = window.innerWidth;
-        const vh = window.innerHeight;
-        const count = Math.max(images.length - 1, 0);
+    // 1. Usamos el hook genérico, traduciendo nuestras props a 'durationInVh'
+    const { scrollProgress, containerHeight } = useScrollProgress(containerRef, {
+        durationInVh: animCount / scrollVelocity,
+    });
 
-        // 1) altura total de scroll
-        const totalScroll = vh * count / scrollVelocity;
-        scrollSpaceRef.current = totalScroll;
-        setContainerHeight(totalScroll + vh);
-
-        // 2) cálculo ángulo y longitud de la hipotenusa
-        const horiz = (diagonalAngle / 100) * vw;
-        const angleRad = Math.atan(horiz / vh);
-        setSeparatorAngle(angleRad * 180 / Math.PI);
-        setSeparatorHeight(Math.hypot(vh, horiz));
-    }, [images.length, scrollVelocity, diagonalAngle]);
+    // 2. El componente ahora es responsable de su propia lógica de presentación
+    const [separatorGeometry, setSeparatorGeometry] = useState({ angle: 0, height: 0 });
 
     useEffect(() => {
-        let frameId;
+        const calculateGeometry = () => {
+            const vw = window.innerWidth;
+            const vh = window.innerHeight;
+            const horiz = (diagonalAngle / 100) * vw;
+            const angleRad = Math.atan(horiz / vh);
 
-        const handleUpdate = () => {
-            // cancelamos cualquier frame pendiente
-            if (frameId) cancelAnimationFrame(frameId);
-
-            frameId = requestAnimationFrame(() => {
-                updateDimensions();
-
-                // 3) progreso de scroll
-                if (!containerRef.current) return;
-                const top = containerRef.current.getBoundingClientRect().top;
-                const prog = Math.min(Math.max(-top / scrollSpaceRef.current, 0), 1);
-                setScrollProgress(prog);
+            setSeparatorGeometry({
+                angle: angleRad * 180 / Math.PI,
+                height: Math.hypot(vh, horiz),
             });
         };
 
-        window.addEventListener("scroll", handleUpdate, { passive: true });
-        window.addEventListener("resize", handleUpdate);
-        handleUpdate(); // llamada inicial
-
-        return () => {
-            window.removeEventListener("scroll", handleUpdate);
-            window.removeEventListener("resize", handleUpdate);
-            if (frameId) cancelAnimationFrame(frameId);
-        };
-    }, [updateDimensions]);
+        calculateGeometry(); // Cálculo inicial
+        window.addEventListener('resize', calculateGeometry);
+        return () => window.removeEventListener('resize', calculateGeometry);
+    }, [diagonalAngle]); // Recalcular si el ángulo cambia
 
     if (!images?.length) return null;
-    const animCount = images.length - 1;
 
     return (
         <div
             ref={containerRef}
-            style={{
-                position: "relative",
-                height: `${containerHeight}px`,
-                backgroundColor: "#000",
-            }}
+            style={{ height: `${containerHeight}px`, position: "relative", backgroundColor: "#000" }}
         >
-            <div
-                style={{
-                    position: "sticky",
-                    top: 0,
-                    left: 0,
-                    width: "100%",
-                    height: "100vh",
-                    overflow: "hidden",
-                }}
-            >
+            <div style={{ position: "sticky", top: 0, height: "100vh", width: "100%", overflow: "hidden" }}>
                 {images.map((src, idx) => {
-                    // 4) cálculo de clip-path y posición de la línea
                     const slideProg = scrollProgress * animCount - (idx - 1);
                     const p = Math.min(Math.max(slideProg, 0), 1);
 
+                    // Lógica de clip-path y opacidad (sin cambios)
                     let clip = "polygon(100% 0%,100% 0%,100% 100%,100% 100%)";
                     let sepX = 0;
                     let sepOp = 0;
@@ -108,27 +71,8 @@ const GuillotineScrollGallery = ({
 
                     return (
                         <Fragment key={idx}>
-                            <div
-                                style={{
-                                    position: "absolute",
-                                    top: 0,
-                                    left: 0,
-                                    width: "100vw",
-                                    height: "100vh",
-                                    zIndex: idx,
-                                    clipPath: clip,
-                                    willChange: "clip-path",
-                                }}
-                            >
-                                <img
-                                    src={src}
-                                    alt={`slide-${idx}`}
-                                    style={{
-                                        width: "100%",
-                                        height: "100%",
-                                        objectFit: "cover",
-                                    }}
-                                />
+                            <div style={{ position: "absolute", top: 0, left: 0, width: "100vw", height: "100vh", zIndex: idx, clipPath: clip, willChange: "clip-path" }}>
+                                <img src={src} alt={`slide-${idx}`} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
                             </div>
 
                             {idx > 0 && separatorWidth > 0 && sepOp > 0 && (
@@ -138,13 +82,14 @@ const GuillotineScrollGallery = ({
                                         top: 0,
                                         left: `${sepX}px`,
                                         width: `${separatorWidth}px`,
-                                        height: `${separatorHeight}px`,
+                                        // Usamos los valores de nuestro estado local
+                                        height: `${separatorGeometry.height}px`,
                                         backgroundColor: separatorColor,
                                         zIndex: idx,
                                         opacity: sepOp,
                                         willChange: "left, opacity, transform",
                                         transformOrigin: "top left",
-                                        transform: `rotate(-${separatorAngle}deg)`,
+                                        transform: `rotate(-${separatorGeometry.angle}deg)`,
                                     }}
                                 />
                             )}

@@ -1,55 +1,93 @@
-import { useState, useLayoutEffect, useCallback } from 'react';
+// hooks/useScrollProgress.js
+
+import { useState, useEffect, useCallback, useRef } from 'react';
 
 /**
- * Un hook personalizado que rastrea el progreso del scroll vertical
- * dentro de un elemento contenedor específico.
+ * Hook genérico y performante para medir el progreso del scroll de un elemento.
+ * Devuelve un valor entre 0 y 1 que representa el scroll completado.
  *
- * @param {React.RefObject<HTMLElement>} containerRef - Una referencia al elemento contenedor cuyo progreso de scroll se va a medir.
- * @param {object} [options] - Opciones de configuración.
- * @param {boolean} [options.isEnabled=true] - Permite habilitar o deshabilitar el hook.
- * @returns {number} El progreso del scroll como un valor normalizado de 0 a 1.
+ * @param {React.RefObject<HTMLElement>} containerRef - Ref al contenedor que se va a observar.
+ * @param {object} options - Opciones de configuración.
+ * @param {number} options.durationInVh - La duración del "scroll falso" en múltiplos de la altura del viewport.
+ * Por ejemplo, un valor de 2 significa que la animación durará lo que se tarda en hacer scroll de 2 pantallas.
+ * @returns {{scrollProgress: number, containerHeight: number}} - El progreso del scroll y la altura calculada para el contenedor.
  */
-export function useScrollProgress(containerRef, options = {}) {
-    const { isEnabled = true } = options;
+export const useScrollProgress = (containerRef, { durationInVh = 1 }) => {
     const [scrollProgress, setScrollProgress] = useState(0);
+    const [containerHeight, setContainerHeight] = useState(0);
 
-    const handleScroll = useCallback(() => {
-        if (!containerRef.current || !isEnabled) {
-            setScrollProgress(0);
-            return;
-        }
+    const isIntersectingRef = useRef(false);
+    const scrollSpaceRef = useRef(0);
+    const animationFrameId = useRef(null);
 
-        const rect = containerRef.current.getBoundingClientRect();
+    // Esta función ahora es más simple. Solo calcula la altura del contenedor.
+    const updateScrollSpace = useCallback(() => {
         const vh = window.innerHeight;
+        const totalScroll = vh * durationInVh;
 
-        // La altura total del contenedor es su propia altura visible más el scroll "invisible".
-        const containerHeight = rect.height;
+        scrollSpaceRef.current = totalScroll;
+        setContainerHeight(totalScroll + vh);
+    }, [durationInVh]);
 
-        // La distancia que se puede scrollear DENTRO del componente.
-        const scrollableDistance = containerHeight - vh;
+    // Efecto para manejar el scroll y actualizar el progreso
+    useEffect(() => {
+        const handleScroll = () => {
+            if (!isIntersectingRef.current || !containerRef.current) return;
 
-        if (scrollableDistance <= 0) {
-            setScrollProgress(1); // Si no hay scroll, se considera completado.
-            return;
-        }
+            if (animationFrameId.current) {
+                cancelAnimationFrame(animationFrameId.current);
+            }
 
-        // -rect.top nos da el scroll positivo. Lo dividimos por la distancia total
-        // y lo acotamos (clamp) entre 0 y 1.
-        const progress = Math.max(0, Math.min(1, -rect.top / scrollableDistance));
+            animationFrameId.current = requestAnimationFrame(() => {
+                const { top } = containerRef.current.getBoundingClientRect();
+                const scrollSpace = scrollSpaceRef.current;
 
-        setScrollProgress(progress);
+                if (scrollSpace > 0) {
+                    const progress = Math.min(Math.max(-top / scrollSpace, 0), 1);
+                    setScrollProgress(progress);
+                } else {
+                    // Si no hay espacio de scroll, el progreso es 0 o 1 si ya pasó.
+                    setScrollProgress(top < 0 ? 1 : 0);
+                }
+            });
+        };
 
-    }, [containerRef, isEnabled]);
-
-    useLayoutEffect(() => {
-        // En lugar de usar requestAnimationFrame, podemos simplemente escuchar y dejar
-        // que React agrupe los renders. Es más simple y a menudo suficiente.
-        // Si se notara lag, se podría reintroducir rAF.
         window.addEventListener('scroll', handleScroll, { passive: true });
-        handleScroll(); // Llamada inicial para establecer el estado
+        window.addEventListener('resize', updateScrollSpace);
+        updateScrollSpace(); // Llamada inicial
 
-        return () => window.removeEventListener('scroll', handleScroll);
-    }, [handleScroll]);
+        return () => {
+            window.removeEventListener('scroll', handleScroll);
+            window.removeEventListener('resize', updateScrollSpace);
+            if (animationFrameId.current) {
+                cancelAnimationFrame(animationFrameId.current);
+            }
+        };
+    }, [updateScrollSpace, containerRef]);
 
-    return scrollProgress;
-}
+
+    // Este efecto no cambia. Sigue siendo nuestro interruptor de performance.
+    useEffect(() => {
+        const container = containerRef.current;
+        if (!container) return;
+
+        const observer = new IntersectionObserver(
+            ([entry]) => {
+                isIntersectingRef.current = entry.isIntersecting;
+            },
+            { threshold: 0 }
+        );
+
+        observer.observe(container);
+
+        return () => {
+            if (container) observer.unobserve(container);
+        };
+    }, [containerRef]);
+
+    // Devolvemos solo los valores genéricos
+    return {
+        scrollProgress,
+        containerHeight
+    };
+};

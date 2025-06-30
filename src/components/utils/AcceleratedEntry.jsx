@@ -1,92 +1,110 @@
 // AcceleratedEntry.jsx
-import React, { useState, useLayoutEffect, useRef } from 'react';
+import React, { useState, useLayoutEffect, useEffect, useRef } from 'react'; // Añadimos useEffect
 import PropTypes from 'prop-types';
 
 export default function AcceleratedEntry({ children, intensity = 1.0, className = '' }) {
-    // Referencia para el contenedor exterior (placeholder)
     const placeholderRef = useRef(null);
-    // Referencia para el contenedor interior que envuelve a children
     const contentRef = useRef(null);
 
-    // Estado para la altura, que será actualizado dinámicamente por el ResizeObserver
     const [contentHeight, setContentHeight] = useState('auto');
     const [animatedStyle, setAnimatedStyle] = useState({ opacity: 0, transform: 'translateY(100px)' });
+
+    // --- NUEVO: Ref para controlar la visibilidad ---
+    // Usamos un ref para saber si el componente está en pantalla, sin causar re-renders.
+    const isIntersectingRef = useRef(false);
+    const animationFrameId = useRef(null);
 
     const clampedIntensity = Math.max(0, Math.min(1, intensity));
     const maxTranslateY = 50 + 200 * clampedIntensity;
 
-    // --- EFECTO 1: Observador de tamaño (Soluciona el colapso del layout) ---
+    // --- EFECTO 1: Observador de tamaño (SIN CAMBIOS) ---
+    // Esta lógica es excelente y la conservamos tal cual.
     useLayoutEffect(() => {
-        // El ResizeObserver nos notificará cada vez que el tamaño del contenido cambie.
         const observer = new ResizeObserver(entries => {
-            // entries[0] es nuestro elemento observado (contentRef)
             if (entries[0]) {
                 const height = entries[0].contentRect.height;
-                setContentHeight(height); // Actualizamos la altura del placeholder
+                setContentHeight(height);
             }
         });
-
         const node = contentRef.current;
-        if (node) {
-            observer.observe(node); // Empezamos a observar el contenido
-        }
-
-        // Función de limpieza: crucial para evitar memory leaks
+        if (node) observer.observe(node);
         return () => {
-            if (node) {
-                observer.unobserve(node);
-            }
+            if (node) observer.unobserve(node);
             observer.disconnect();
         };
-    }, []); // Se ejecuta solo una vez para configurar el observador
+    }, []);
 
-    // --- EFECTO 2: Lógica de Animación por Scroll ---
-    useLayoutEffect(() => {
+    // --- EFECTO 2: Observador de visibilidad (NUEVO) ---
+    // Este es nuestro "interruptor". Activa y desactiva la lógica de scroll.
+    useEffect(() => {
+        const observer = new IntersectionObserver(
+            ([entry]) => {
+                isIntersectingRef.current = entry.isIntersecting;
+            },
+            // Se activa en cuanto el elemento empieza a entrar o a salir
+            { threshold: 0 }
+        );
+        const node = placeholderRef.current;
+        if (node) observer.observe(node);
+        return () => {
+            if (node) observer.unobserve(node);
+        };
+    }, []);
+
+    // --- EFECTO 3: Lógica de Animación por Scroll (REFACTORIZADO) ---
+    // Este efecto ahora es mucho más performante.
+    useEffect(() => {
         const handleScroll = () => {
-            if (!placeholderRef.current) return;
+            // No hacemos NADA si el elemento no está en pantalla.
+            if (!isIntersectingRef.current || !placeholderRef.current) {
+                return;
+            }
 
-            const { top } = placeholderRef.current.getBoundingClientRect();
-            const viewportHeight = window.innerHeight;
+            // Cancelamos cualquier frame anterior y pedimos uno nuevo.
+            if (animationFrameId.current) {
+                cancelAnimationFrame(animationFrameId.current);
+            }
 
-            const animationStartPoint = viewportHeight;
-            const animationEndPoint = viewportHeight * 0.4;
-            const animationDistance = animationStartPoint - animationEndPoint;
+            animationFrameId.current = requestAnimationFrame(() => {
+                // La lógica de cálculo de la animación es la misma que antes.
+                const { top } = placeholderRef.current.getBoundingClientRect();
+                const viewportHeight = window.innerHeight;
 
-            const rawProgress = (animationStartPoint - top) / animationDistance;
-            const progress = Math.max(0, Math.min(1, rawProgress));
+                const animationStartPoint = viewportHeight;
+                const animationEndPoint = viewportHeight * 0.4;
+                const animationDistance = animationStartPoint - animationEndPoint;
 
-            setAnimatedStyle({
-                opacity: progress,
-                transform: `translateY(${maxTranslateY * (1 - progress)}px)`,
+                const rawProgress = (animationStartPoint - top) / animationDistance;
+                const progress = Math.max(0, Math.min(1, rawProgress));
+
+                setAnimatedStyle({
+                    opacity: progress,
+                    transform: `translateY(${maxTranslateY * (1 - progress)}px)`,
+                });
             });
         };
 
+        // La llamada inicial es importante para establecer el estado correcto al cargar.
         handleScroll();
         window.addEventListener('scroll', handleScroll, { passive: true });
-        return () => window.removeEventListener('scroll', handleScroll);
-    }, [clampedIntensity, maxTranslateY]);
+
+        return () => {
+            window.removeEventListener('scroll', handleScroll);
+            if (animationFrameId.current) {
+                cancelAnimationFrame(animationFrameId.current);
+            }
+        };
+    }, [clampedIntensity, maxTranslateY]); // Mantenemos las dependencias originales
 
     return (
-        // 1. EL MARCADOR DE POSICIÓN
-        // Ahora su altura es dinámica gracias al ResizeObserver.
         <div
             ref={placeholderRef}
-            style={{
-                height: `${contentHeight}px`,
-                // Este position: relative es necesario como ancla para el hijo "sticky".
-                position: 'relative',
-            }}
+            style={{ height: `${contentHeight}px`, position: 'relative' }}
             className={className}
         >
-            {/* 2. EL ANIMADOR */}
-            {/* Usamos position: sticky. No rompe el layout interno del hijo. */}
             <div
                 ref={contentRef}
-                style={{
-                    ...animatedStyle,
-                    position: 'sticky',
-                    top: 0, // Se "pegará" en la parte superior de su contenedor (placeholder)
-                }}
+                style={{ ...animatedStyle, position: 'sticky', top: 0 }}
             >
                 {children}
             </div>
