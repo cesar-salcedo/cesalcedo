@@ -1,127 +1,89 @@
 // AcceleratedEntry.jsx
-import React, { useState, useLayoutEffect, useEffect, useRef } from 'react';
+import React, { useRef, useLayoutEffect } from 'react';
 import PropTypes from 'prop-types';
 
 /**
- * Sticky entry that fades & translates from bottom of the viewport until it reaches 40 % of the screen height.
- * Optimisations:
- * – no React state updates per frame (only direct DOM writes inside rAF)
- * – resize handler preserved and cleaned up correctly (no memory leaks)
- * – translate3d for GPU acceleration and corrected missing parenthesis
+ * Sticky entry that fades & translates from bottom of the viewport
+ * until it reaches `offset` * 100% of the screen height.
+ *
+ * – No React state updates per frame (direct DOM writes).
+ * – Resize/scroll listeners cleaned up correctly.
+ * – Uses GPU-accelerated translate3d.
  */
-export default function AcceleratedEntry({ children, intensity = 1, className = '' }) {
-    const placeholderRef = useRef(null);
-    const contentRef = useRef(null);
+const AcceleratedEntry = ({ children, offset = 0.4 }) => {
+    const containerRef = useRef(null);
+    const ticking = useRef(false);
 
-    // Height is kept in state because it changes rarely (only on resize)
-    const [contentHeight, setContentHeight] = useState('auto');
-
-    const isIntersecting = useRef(false);
-    const rafId = useRef(null);
-
-    // --- measure content height -------------------------------------------------
     useLayoutEffect(() => {
-        const node = contentRef.current;
-        if (!node) return;
+        const el = containerRef.current;
+        if (!el) return;
 
-        const ro = new ResizeObserver(([entry]) => {
-            setContentHeight(entry.contentRect.height);
-        });
+        const vh = () => window.innerHeight;
 
-        ro.observe(node);
-        return () => ro.disconnect();
-    }, []);
 
-    // --- track visibility -------------------------------------------------------
-    useEffect(() => {
-        const node = placeholderRef.current;
-        if (!node) return undefined;
+        const updatePosition = () => {
+            ticking.current = false;
+            const rect = el.getBoundingClientRect();
+            const height = vh();
+            const start = height * offset;
+            const end = height;
+            const totalDist = end - start;
+            let translateY = rect.top - start;
+            let opacity;
 
-        const io = new IntersectionObserver(
-            ([entry]) => {
-                isIntersecting.current = entry.isIntersecting;
-            },
-            { threshold: 0 },
-        );
-
-        io.observe(node);
-        return () => io.disconnect();
-    }, []);
-
-    // --- scroll animation -------------------------------------------------------
-    useEffect(() => {
-        const node = contentRef.current;
-        if (!node) return undefined;
-
-        // metrics that change on resize
-        let viewH = window.innerHeight;
-        let startY = viewH;
-        let endY = viewH * 0.4;
-        let distance = startY - endY;
-        const maxTranslate = distance * intensity;
-
-        const updateMetrics = () => {
-            viewH = window.innerHeight;
-            startY = viewH;
-            endY = viewH * 0.4;
-            distance = startY - endY;
-        };
-
-        const renderFrame = () => {
-            if (!isIntersecting.current) {
-                rafId.current = null;
-                return;
+            if (rect.top >= end) {
+                // Below viewport
+                translateY = totalDist;
+                opacity = 0;
+            } else if (rect.top <= start) {
+                // Above threshold
+                translateY = 0;
+                opacity = 1;
+            } else {
+                // In between
+                opacity = (height - rect.top) / totalDist;
             }
 
-            const rect = placeholderRef.current.getBoundingClientRect();
-            const raw = 1 - (rect.top - endY) / distance;
-            const progress = Math.max(0, Math.min(raw, 1));
-
-            node.style.opacity = progress;
-            node.style.transform = `translate3d(0, ${maxTranslate * (1 - progress)}px, 0)`;
-
-            rafId.current = requestAnimationFrame(renderFrame);
+            el.style.transform = `translate3d(0, ${translateY}px, 0)`;
+            el.style.opacity = opacity;
         };
 
-        const handleScroll = () => {
-            if (rafId.current == null) {
-                rafId.current = requestAnimationFrame(renderFrame);
+        const onScroll = () => {
+            if (!ticking.current) {
+                window.requestAnimationFrame(updatePosition);
+                ticking.current = true;
             }
         };
 
-        // kick‑off
-        handleScroll();
-
-        window.addEventListener('scroll', handleScroll, { passive: true });
-
-        const resizeHandler = () => {
-            updateMetrics();
-            handleScroll();
+        const onResize = () => {
+            window.requestAnimationFrame(updatePosition);
         };
-        window.addEventListener('resize', resizeHandler, { passive: true });
+
+        window.addEventListener('scroll', onScroll, { passive: true });
+        window.addEventListener('resize', onResize);
+
+        // Initial positioning
+        updatePosition();
 
         return () => {
-            window.removeEventListener('scroll', handleScroll);
-            window.removeEventListener('resize', resizeHandler);
-            if (rafId.current) cancelAnimationFrame(rafId.current);
+            window.removeEventListener('scroll', onScroll);
+            window.removeEventListener('resize', onResize);
         };
-    }, [intensity]);
+    }, [offset]);
 
     return (
         <div
-            ref={placeholderRef}
-            style={{ height: `${contentHeight}px`, position: 'relative' }}
-            className={className}
+            ref={containerRef}
+            style={{ willChange: 'transform, opacity' }}
         >
-            <div ref={contentRef} style={{ position: 'sticky', top: 0, willChange: 'transform, opacity' }}>
-                {children}
-            </div>
+            {children}
         </div>
     );
-}
+};
 
 AcceleratedEntry.propTypes = {
     children: PropTypes.node.isRequired,
-    intensity: PropTypes.number,
-    className: PropTypes.string,
+    offset: PropTypes.number,
 };
+
+export default AcceleratedEntry;
