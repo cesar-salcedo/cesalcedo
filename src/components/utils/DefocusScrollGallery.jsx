@@ -1,97 +1,139 @@
-import React, { useRef, useMemo } from "react";
-import { useScrollProgress } from "../hooks/useScrollProgress";
+import React, { useRef, useEffect, useState } from 'react';
+import PropTypes from 'prop-types';
 
-const DefocusScrollGallery = ({
+export default function DefocusScrollGallery({
     images,
-    scrollSpeed = 2.5,
+    scrollSpeed = 1.0,
     holdRatio = 0.7,
     maxBlur = 60,
-}) => {
-    const containerRef = useRef(null);
+    className = ''
+}) {
+    const placeholderRef = useRef(null);
+    const slideRefs = useRef([]);
+    const [containerHeight, setContainerHeight] = useState('auto');
+
     const animCount = Math.max(images.length - 1, 0);
+    const transitionVh = 1 / scrollSpeed;
+    const holdVh = transitionVh * holdRatio;
+    const chapterVh = transitionVh + holdVh;
+    const totalVh = animCount * chapterVh;
 
-    // Los cálculos de duración ahora se hacen dentro del useMemo donde se usan,
-    // pero calculamos la duración total aquí para pasarla al hook.
-    const transitionDurationVh = 1 / scrollSpeed;
-    const holdDurationVh = transitionDurationVh * holdRatio;
-    const chapterDurationVh = transitionDurationVh + holdDurationVh;
-    const totalDurationInVh = animCount * chapterDurationVh;
+    // Calcular altura en píxeles según viewport
+    useEffect(() => {
+        const updateHeight = () => {
+            setContainerHeight(window.innerHeight * totalVh);
+        };
+        updateHeight();
+        window.addEventListener('resize', updateHeight);
+        return () => window.removeEventListener('resize', updateHeight);
+    }, [totalVh]);
 
-    const { scrollProgress, containerHeight } = useScrollProgress(containerRef, {
-        durationInVh: totalDurationInVh,
-    });
+    // Animación por scroll manipulando el DOM directamente
+    useEffect(() => {
+        let rafId;
 
-    const visualProgress = useMemo(() => {
-        // --- INICIO DE LA CORRECCIÓN 1 ---
-        // Movemos los cálculos que dependen de las props aquí dentro.
-        const localTransitionDuration = 1 / scrollSpeed;
-        const localHoldDuration = localTransitionDuration * holdRatio;
-        const localChapterDuration = localTransitionDuration + localHoldDuration;
+        // Pre-promoción de capas
+        slideRefs.current.forEach(node => {
+            if (node) node.style.willChange = 'opacity, filter';
+        });
 
-        if (animCount === 0 || localChapterDuration === 0) return 0;
+        const handleScroll = () => {
+            if (!placeholderRef.current) return;
+            if (rafId) cancelAnimationFrame(rafId);
 
-        const overallChapterProgress = scrollProgress * animCount;
-        const chapterIndex = Math.floor(overallChapterProgress);
-        const progressWithinChapter = overallChapterProgress - chapterIndex;
+            rafId = requestAnimationFrame(() => {
+                const { top } = placeholderRef.current.getBoundingClientRect();
+                const viewportH = window.innerHeight;
+                const maxScroll = containerHeight - viewportH;
+                const scrollDelta = -Math.min(0, top);
+                const scrollProg = maxScroll > 0 ? Math.min(1, Math.max(0, scrollDelta / maxScroll)) : 0;
 
-        const holdRatioInChapter = localHoldDuration / localChapterDuration;
-        const transitionRatioInChapter = localTransitionDuration / localChapterDuration;
+                // Cálculo de progreso visual
+                const overallProg = scrollProg * animCount;
+                const chapterIdx = Math.floor(overallProg);
+                const within = overallProg - chapterIdx;
+                const holdRatioInChapter = holdVh / chapterVh;
+                const transRatioInChapter = transitionVh / chapterVh;
+                let animProg = 0;
+                if (within > holdRatioInChapter && transRatioInChapter > 0) {
+                    animProg = (within - holdRatioInChapter) / transRatioInChapter;
+                }
+                const visualProg = chapterIdx + animProg;
 
-        let animationProgress = 0;
-        if (progressWithinChapter > holdRatioInChapter && transitionRatioInChapter > 0) {
-            animationProgress = (progressWithinChapter - holdRatioInChapter) / transitionRatioInChapter;
-        }
+                // Aplicar estilos a cada slide
+                slideRefs.current.forEach((node, idx) => {
+                    if (!node) return;
+                    const slideProg = visualProg - idx;
+                    const opacity = Math.max(0, 1 - Math.abs(slideProg));
+                    const blur = Math.min(maxBlur, Math.abs(slideProg) * maxBlur);
+                    node.style.opacity = opacity;
+                    node.style.filter = `blur(${blur}px)`;
+                    node.style.visibility = opacity > 0 ? 'visible' : 'hidden';
+                });
+            });
+        };
 
-        return chapterIndex + animationProgress;
-        // Ahora las dependencias son correctas y explícitas para el linter.
-    }, [scrollProgress, animCount, scrollSpeed, holdRatio]);
-    // --- FIN DE LA CORRECCIÓN 1 ---
+        handleScroll();
+        window.addEventListener('scroll', handleScroll, { passive: true });
+        window.addEventListener('resize', handleScroll, { passive: true });
+        return () => {
+            window.removeEventListener('scroll', handleScroll);
+            window.removeEventListener('resize', handleScroll);
+            if (rafId) cancelAnimationFrame(rafId);
+        };
+    }, [animCount, containerHeight, transitionVh, holdVh, chapterVh, maxBlur]);
 
-
-    if (!images?.length) return null;
+    if (!images || images.length === 0) return null;
 
     return (
         <div
-            ref={containerRef}
-            style={{ position: "relative", height: `${containerHeight}px`, backgroundColor: "#000" }}
+            ref={placeholderRef}
+            style={{ height: `${containerHeight}px`, position: 'relative' }}
+            className={className}
         >
             <div
-                style={{ position: "sticky", top: 0, left: 0, width: "100%", height: "100vh", overflow: "hidden" }}
+                style={{
+                    position: 'sticky',
+                    top: 0,
+                    left: 0,
+                    width: '100%',
+                    height: '100vh',
+                    overflow: 'hidden',
+                    backgroundColor: '#000'
+                }}
             >
-                {images.map((src, idx) => {
-                    const slideProgress = visualProgress - idx;
-                    const opacity = Math.max(0, 1 - Math.abs(slideProgress));
-
-                    // --- INICIO DE LA CORRECCIÓN 2 ---
-                    // Usamos maxBlur en lugar de blur en el cálculo.
-                    const blur = Math.min(maxBlur, Math.abs(slideProgress) * maxBlur);
-                    // --- FIN DE LA CORRECCIÓN 2 ---
-
-                    const isVisible = opacity > 0;
-
-                    return (
-                        <div
-                            key={idx}
-                            style={{
-                                position: "absolute", top: 0, left: 0, width: "100%", height: "100%",
-                                zIndex: idx,
-                                opacity,
-                                filter: `blur(${blur}px)`,
-                                visibility: isVisible ? "visible" : "hidden",
-                                willChange: "opacity, filter",
-                            }}
-                        >
-                            <img
-                                src={src}
-                                alt={`slide-${idx}`}
-                                style={{ width: "100%", height: "100%", objectFit: "cover" }}
-                            />
-                        </div>
-                    );
-                })}
+                {images.map((src, idx) => (
+                    <div
+                        key={idx}
+                        ref={el => (slideRefs.current[idx] = el)}
+                        style={{
+                            position: 'absolute',
+                            top: 0,
+                            left: 0,
+                            width: '100%',
+                            height: '100%',
+                            zIndex: idx,
+                            opacity: 0,
+                            filter: `blur(${maxBlur}px)`,
+                            visibility: 'hidden'
+                        }}
+                    >
+                        <img
+                            src={src}
+                            alt={`slide-${idx}`}
+                            style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                        />
+                    </div>
+                ))}
             </div>
         </div>
     );
-};
+}
 
-export default DefocusScrollGallery;
+DefocusScrollGallery.propTypes = {
+    images: PropTypes.arrayOf(PropTypes.string).isRequired,
+    scrollSpeed: PropTypes.number,
+    holdRatio: PropTypes.number,
+    maxBlur: PropTypes.number,
+    className: PropTypes.string
+};

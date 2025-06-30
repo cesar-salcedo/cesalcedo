@@ -39,7 +39,7 @@ export default function Mouth({
             />
             <DefocusScrollGallery
                 images={images}
-                scrollSpeed={3}
+                scrollSpeed={1}
                 holdRatio={0.2}
             />
 
