@@ -1,4 +1,3 @@
-// AcceleratedEntry.jsx
 import React, { useState, useLayoutEffect, useEffect, useRef } from 'react';
 import PropTypes from 'prop-types';
 
@@ -6,18 +5,18 @@ export default function AcceleratedEntry({ children, intensity = 1.0, className 
     const placeholderRef = useRef(null);
     const contentRef = useRef(null);
 
-    // State para mantener la altura del contenido
+    // Estado para mantener la altura del contenido
     const [contentHeight, setContentHeight] = useState('auto');
 
     // Refs para control de visibilidad y animación
     const isIntersectingRef = useRef(false);
     const animationFrameId = useRef(null);
 
-    // Intensidad ajustada
+    // Intensidad ajustada para la animación
     const clampedIntensity = Math.max(0, Math.min(1, intensity));
     const maxTranslateY = 50 + 200 * clampedIntensity;
 
-    // --- EFECTO 1: Observador de tamaño ---
+    // **Efecto 1: Observador de tamaño**
     useLayoutEffect(() => {
         const observer = new ResizeObserver(entries => {
             if (entries[0]) {
@@ -34,7 +33,7 @@ export default function AcceleratedEntry({ children, intensity = 1.0, className 
         };
     }, []);
 
-    // --- EFECTO 2: Observador de visibilidad ---
+    // **Efecto 2: Observador de visibilidad**
     useEffect(() => {
         const observer = new IntersectionObserver(
             ([entry]) => {
@@ -51,11 +50,11 @@ export default function AcceleratedEntry({ children, intensity = 1.0, className 
         };
     }, []);
 
-    // --- EFECTO 3: Animación por scroll con manipulación directa del DOM ---
+    // **Efecto 3: Animación por scroll con manipulación directa del DOM**
     useEffect(() => {
         const node = contentRef.current;
         if (node) {
-            // Promocionar la capa de composición para suavizar la animación
+            // Promociona la capa de composición para suavizar la animación
             node.style.willChange = 'opacity, transform';
         }
 
@@ -65,6 +64,7 @@ export default function AcceleratedEntry({ children, intensity = 1.0, className 
         let animationEndPoint = viewportHeight * 0.4;
         let animationDistance = animationStartPoint - animationEndPoint;
 
+        // Función para actualizar métricas
         const updateMetrics = () => {
             viewportHeight = window.innerHeight;
             animationStartPoint = viewportHeight;
@@ -72,6 +72,7 @@ export default function AcceleratedEntry({ children, intensity = 1.0, className 
             animationDistance = animationStartPoint - animationEndPoint;
         };
 
+        // Función para manejar el scroll
         const handleScroll = () => {
             if (!isIntersectingRef.current || !placeholderRef.current) return;
 
@@ -87,7 +88,7 @@ export default function AcceleratedEntry({ children, intensity = 1.0, className 
 
                 if (node) {
                     node.style.opacity = progress;
-                    node.style.transform = `translateY(${maxTranslateY * (1 - progress)}px`;
+                    node.style.transform = `translateY(${maxTranslateY * (1 - progress)}px)`;
                 }
             });
         };
@@ -95,20 +96,29 @@ export default function AcceleratedEntry({ children, intensity = 1.0, className 
         // Inicializa estado y listeners
         handleScroll();
         window.addEventListener('scroll', handleScroll, { passive: true });
-        window.addEventListener('resize', () => {
-            updateMetrics();
-            handleScroll();
-        }, { passive: true });
 
+        // Debounce para el evento de resize
+        let resizeTimeout;
+        const handleResize = () => {
+            clearTimeout(resizeTimeout);
+            resizeTimeout = setTimeout(() => {
+                updateMetrics();
+                handleScroll();
+            }, 100); // Tiempo de debounce ajustable (100ms)
+        };
+        window.addEventListener('resize', handleResize, { passive: true });
+
+        // Limpieza de eventos y animaciones
         return () => {
             window.removeEventListener('scroll', handleScroll);
-            window.removeEventListener('resize', updateMetrics);
+            window.removeEventListener('resize', handleResize);
             if (animationFrameId.current) {
                 cancelAnimationFrame(animationFrameId.current);
             }
         };
     }, [maxTranslateY]);
 
+    // Renderizado del componente
     return (
         <div
             ref={placeholderRef}
@@ -125,6 +135,7 @@ export default function AcceleratedEntry({ children, intensity = 1.0, className 
     );
 }
 
+// Definición de PropTypes
 AcceleratedEntry.propTypes = {
     children: PropTypes.node.isRequired,
     intensity: PropTypes.number,
