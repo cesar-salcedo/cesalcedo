@@ -1,0 +1,17 @@
+/* gallery.css */
+
+.scroll-container {
+    /* La altura del contenedor define CUÁNTO scroll se necesita para completar la animación.
+       300vh significa que la animación durará 3 veces la altura de la pantalla.
+       Ajusta este valor según la cantidad de imágenes y la velocidad deseada. */
+    height: 300vh;
+    position: relative;
+}
+
+.sticky-element {
+    position: sticky;
+    top: 0;
+    width: 100%;
+    height: 100vh;
+    overflow: hidden;
+}

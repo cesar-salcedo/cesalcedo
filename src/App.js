@@ -9,7 +9,7 @@ import Cover from "./components/Cover";
 import Portfolio from "./components/Portfolio";
 import About from "./components/About";
 import Contact from "./components/Contact";
-import ScrollReveal from "./components/utils/ScrollReveal";
+
 
 function App() {
   return (
@@ -30,18 +30,9 @@ function App() {
 
         <Header />
         <Cover />
-        <ScrollReveal>
-          <Portfolio />
-        </ScrollReveal>
-
-        <ScrollReveal>
-          <About />
-        </ScrollReveal>
-
-        <ScrollReveal>
-          <Contact />
-        </ScrollReveal>
-
+        <Portfolio />
+        <About />
+        <Contact />
       </div>
     </Router>
   );

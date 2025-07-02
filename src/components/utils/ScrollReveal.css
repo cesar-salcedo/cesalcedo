@@ -1,11 +1,19 @@
-.scroll-reveal-wrapper {
-  opacity: 0;
-  transform: translateY(30px);
-  transition: opacity 0.6s ease, transform 0.6s ease;
-  will-change: opacity, transform;
+/* scroll-reveal.css */
+
+:root {
+  /* altura de tu header fijo para que el ancla quede pegada justo debajo */
+  --scroll-margin-top: 60px;
 }
 
-.scroll-reveal-visible {
+.scroll-reveal {
+  opacity: 0;
+  transform: translateY(20px);
+  transition: opacity 0.6s ease-out, transform 0.6s ease-out;
+  /* compensa el header fijo al hacer scrollIntoView */
+  scroll-margin-top: var(--scroll-margin-top);
+}
+
+.scroll-reveal.visible {
   opacity: 1;
-  transform: none;
+  transform: translateY(0);
 }

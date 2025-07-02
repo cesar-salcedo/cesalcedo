@@ -18,35 +18,25 @@ export const useScrollProgress = (containerRef, { durationInVh = 1 } = {}) => {
     const scrollSpace = useRef(0);
     const rAFId = useRef(null);
     const lastProgress = useRef(0);
-    const resizeScheduled = useRef(false);
+    // const resizeScheduled = useRef(false); // Eliminado
 
-    // Calcula scrollSpace y altura, sólo actualiza si cambia
+    // Calcula scrollSpace y altura. Ahora solo se recalcula si durationInVh cambia.
     const updateScrollSpace = useCallback(() => {
         const vh = window.innerHeight;
         const totalScroll = vh * durationInVh;
         scrollSpace.current = totalScroll;
 
         const newHeight = totalScroll + vh;
+        // La comparación en setContainerHeight ya previene renders innecesarios
         setContainerHeight(prev => (prev !== newHeight ? newHeight : prev));
 
-        resizeScheduled.current = false;
     }, [durationInVh]);
 
-    // Escucha resize, throttle con requestAnimationFrame
+    // Eliminado el useEffect que escuchaba el evento 'resize'.
+
+    // Este useEffect ahora solo se encarga de calcular el espacio una vez.
     useEffect(() => {
-        const onResize = () => {
-            if (!resizeScheduled.current) {
-                resizeScheduled.current = true;
-                requestAnimationFrame(updateScrollSpace);
-            }
-        };
-
-        window.addEventListener('resize', onResize, { passive: true });
         updateScrollSpace();
-
-        return () => {
-            window.removeEventListener('resize', onResize);
-        };
     }, [updateScrollSpace]);
 
     // Handler de scroll: throttle con requestAnimationFrame y sólo setState si cambia
@@ -60,13 +50,13 @@ export const useScrollProgress = (containerRef, { durationInVh = 1 } = {}) => {
             const raw = space > 0 ? -top / space : (top < 0 ? 1 : 0);
             const progress = Math.min(Math.max(raw, 0), 1);
 
-            // umbral pequeño para evitar micro‐renders
+            // Umbral pequeño para evitar micro‐renders
             if (Math.abs(progress - lastProgress.current) > 0.001) {
                 lastProgress.current = progress;
                 setScrollProgress(progress);
             }
         });
-    }, [containerRef]);
+    }, [containerRef]); // La dependencia de containerRef es suficiente aquí
 
     useEffect(() => {
         window.addEventListener('scroll', handleScroll, { passive: true });

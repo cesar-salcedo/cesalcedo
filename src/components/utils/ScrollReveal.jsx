@@ -1,99 +1,169 @@
-// ScrollReveal.jsx
-import React, { useRef, useEffect, useState } from "react";
-import PropTypes from "prop-types";
+// ScrollReveal.js
+import React, {
+    useRef,
+    useLayoutEffect,
+    useEffect,
+    useCallback,
+    useMemo
+} from 'react';
+import PropTypes from 'prop-types';
 
-/**
- * ScrollReveal
- * Un wrapper de alto rendimiento para animación reveal por scroll.
- * - Soporta anidamiento sin glitches.
- * - NO altera el scroll ni el offset de las anclas.
- * - La animación se dispara solo al entrar en viewport, nunca antes.
- * - Permite transición personalizada vía className.
- */
+// Hook de debounce reutilizable
+function useDebouncedCallback(fn, delay) {
+    const timeoutRef = useRef(null);
+    const callback = useCallback((...args) => {
+        clearTimeout(timeoutRef.current);
+        timeoutRef.current = window.setTimeout(() => fn(...args), delay);
+    }, [fn, delay]);
+    useEffect(() => () => clearTimeout(timeoutRef.current), []);
+    return callback;
+}
+
 export default function ScrollReveal({
     children,
-    as = "div",
-    threshold = 0.15,
-    transitionClass = "reveal-visible",
-    baseClass = "reveal",
-    delay = 4.4,
-    style = {},
-    ...props
+    intensity = 1.0,
+    className = ''
 }) {
-    const Comp = as;
-    const ref = useRef(null);
-    const [visible, setVisible] = useState(false);
+    const placeholderRef = useRef(null);
+    const contentRef = useRef(null);
+    const contentHeightRef = useRef(0);
+    const isIntersectingRef = useRef(false);
+    const rafIdRef = useRef(null);
 
-    // Reveal solo cuando entra en viewport (no al montar)
-    useEffect(() => {
-        if (!ref.current) return;
-        let observer;
-        let cancelled = false;
+    const metricsRef = useRef({
+        start: window.innerHeight,
+        distance: window.innerHeight * 0.6
+    });
 
-        function reveal() {
-            if (!cancelled) setVisible(true);
-        }
+    const clampedIntensity = Math.min(1, Math.max(0, intensity));
+    const maxTranslateY = useMemo(
+        () => 50 + 200 * clampedIntensity,
+        [clampedIntensity]
+    );
 
-        observer = new window.IntersectionObserver(
-            ([entry]) => {
-                if (entry.isIntersecting) {
-                    if (delay) {
-                        setTimeout(reveal, delay);
-                    } else {
-                        reveal();
-                    }
-                    observer.disconnect(); // Animar solo una vez
-                }
-            },
-            { threshold }
-        );
-        observer.observe(ref.current);
-
-        return () => {
-            cancelled = true;
-            observer && observer.disconnect();
+    const updateMetrics = useCallback(() => {
+        const vh = window.innerHeight;
+        metricsRef.current = {
+            start: vh,
+            distance: vh * 0.6
         };
-    }, [threshold, delay]);
+    }, []);
 
-    // Para anidamiento: nunca usar translate ni cambiar offsetTop en el DOM
-    // Solo añade clase para animar opacidad/transform local
-    return (
-        <Comp
-            ref={ref}
-            className={
-                baseClass +
-                (visible ? ` ${transitionClass}` : "") +
-                (props.className ? ` ${props.className}` : "")
+    const onResize = useDebouncedCallback(() => {
+        updateMetrics();
+        onScroll();
+    }, 100);
+
+    const onScroll = useCallback(() => {
+        if (
+            !isIntersectingRef.current ||
+            !placeholderRef.current ||
+            !contentRef.current
+        ) return;
+
+        if (rafIdRef.current) cancelAnimationFrame(rafIdRef.current);
+        rafIdRef.current = requestAnimationFrame(() => {
+            const top = placeholderRef.current.getBoundingClientRect().top;
+            const { start, distance } = metricsRef.current;
+            const progress = Math.min(1, Math.max(0, (start - top) / distance));
+            const node = contentRef.current;
+            node.style.opacity = progress;
+            node.style.transform = `translateY(${maxTranslateY * (1 - progress)}px)`;
+        });
+    }, [maxTranslateY]);
+
+    // --- Observers y listeners existentes (sin cambios) ---
+    useLayoutEffect(() => {
+        if (!contentRef.current) return;
+        const ro = new ResizeObserver(entries => {
+            const h = entries[0]?.contentRect.height || 0;
+            if (contentHeightRef.current !== h) {
+                contentHeightRef.current = h;
+                window.requestAnimationFrame(() => {
+                    if (placeholderRef.current) {
+                        placeholderRef.current.style.height = `${h}px`;
+                    }
+                });
             }
-            style={style}
-            {...props}
+        });
+        ro.observe(contentRef.current);
+        return () => ro.disconnect();
+    }, []);
+
+    useEffect(() => {
+        if (!placeholderRef.current) return;
+        const io = new IntersectionObserver(
+            ([entry]) => {
+                isIntersectingRef.current = entry.isIntersecting;
+            },
+            { threshold: 0 }
+        );
+        io.observe(placeholderRef.current);
+        return () => io.disconnect();
+    }, []);
+
+    useEffect(() => {
+        if (contentRef.current) {
+            contentRef.current.style.willChange = 'opacity, transform';
+        }
+        updateMetrics();
+        onScroll();
+        window.addEventListener('scroll', onScroll, { passive: true });
+        window.addEventListener('resize', onResize, { passive: true });
+        return () => {
+            window.removeEventListener('scroll', onScroll);
+            window.removeEventListener('resize', onResize);
+            if (rafIdRef.current) cancelAnimationFrame(rafIdRef.current);
+        };
+    }, [onScroll, onResize, updateMetrics]);
+
+    // ————— Hook para manejar anclas (hash) —————
+    useEffect(() => {
+        const handleHash = () => {
+            const hash = window.location.hash;
+            if (!hash) return;
+            const target = document.getElementById(hash.slice(1));
+            if (target && placeholderRef.current.contains(target)) {
+                // forzamos scroll hasta esa referencia
+                target.scrollIntoView({ behavior: 'auto', block: 'start' });
+                // aseguramos revelado completo
+                isIntersectingRef.current = true;
+                updateMetrics();
+                // al siguiente tick
+                setTimeout(onScroll, 0);
+            }
+        };
+
+        // initial
+        handleHash();
+        // en cambios de hash
+        window.addEventListener('hashchange', handleHash);
+        return () => window.removeEventListener('hashchange', handleHash);
+    }, [updateMetrics, onScroll]);
+
+    return (
+        <div
+            ref={placeholderRef}
+            className={className}
+            style={{ position: 'relative', height: `${contentHeightRef.current}px` }}
         >
-            {children}
-        </Comp>
+            <div
+                ref={contentRef}
+                style={{
+                    position: 'sticky',
+                    top: 0,
+                    opacity: 0,
+                    transform: `translateY(${maxTranslateY}px)`
+                }}
+            >
+                {children}
+            </div>
+        </div>
     );
 }
 
 ScrollReveal.propTypes = {
     children: PropTypes.node.isRequired,
-    as: PropTypes.elementType,
-    threshold: PropTypes.number,
-    transitionClass: PropTypes.string,
-    baseClass: PropTypes.string,
-    delay: PropTypes.number,
-    style: PropTypes.object,
+    intensity: PropTypes.number,
+    className: PropTypes.string
 };
-
-// Ejemplo de estilos CSS (añádelo a tu CSS global o módulo):
-/*
-.reveal {
-  opacity: 0;
-  transform: translateY(40px);
-  transition: opacity 0.65s cubic-bezier(.37,.64,.43,.99), transform 0.65s cubic-bezier(.37,.64,.43,.99);
-  will-change: opacity, transform;
-}
-.reveal-visible {
-  opacity: 1;
-  transform: none;
-}
-*/
-
