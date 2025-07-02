@@ -1,5 +1,6 @@
-import React, { useRef, useEffect, useState } from 'react';
+import React, { useRef, useEffect } from 'react';
 import PropTypes from 'prop-types';
+import { useScrollProgress } from '../hooks/useScrollProgress'; // Asegúrate que la ruta sea correcta
 
 export default function DefocusScrollGallery({
     images,
@@ -10,81 +11,70 @@ export default function DefocusScrollGallery({
 }) {
     const placeholderRef = useRef(null);
     const slideRefs = useRef([]);
-    const [containerHeight, setContainerHeight] = useState('auto');
 
+    // 1. Calcular duraciones
     const animCount = Math.max(images.length - 1, 0);
     const transitionVh = 1 / scrollSpeed;
     const holdVh = transitionVh * holdRatio;
     const chapterVh = transitionVh + holdVh;
-    const totalVh = animCount * chapterVh;
 
-    // Calcular altura en píxeles según viewport
+    // CAMBIO CLAVE 1: Separar la duración de la animación de la duración total del scroll.
+    // La animación activa ocurre durante los 'animCount' capítulos.
+    const animationVh = animCount * chapterVh;
+    // La duración total incluye un 'hold' extra para la última imagen.
+    const totalDurationInVh = animationVh + holdVh;
+
+    // 2. Usar el hook con la nueva duración total
+    const { scrollProgress, containerHeight } = useScrollProgress(placeholderRef, {
+        durationInVh: totalDurationInVh
+    });
+
+    // 3. Un único useEffect que reacciona a los cambios en el progreso del scroll
     useEffect(() => {
-        const updateHeight = () => {
-            setContainerHeight(window.innerHeight * totalVh);
-        };
-        updateHeight();
-        window.addEventListener('resize', updateHeight);
-        return () => window.removeEventListener('resize', updateHeight);
-    }, [totalVh]);
+        // CAMBIO CLAVE 2: Calcular el progreso relativo a la animación, no al scroll total.
+        // Esto hace que el progreso de la animación llegue a 1 antes de que el scroll termine.
+        let animationProgress = 0;
+        if (animationVh > 0) {
+            animationProgress = (scrollProgress * totalDurationInVh) / animationVh;
+        }
 
-    // Animación por scroll manipulando el DOM directamente
-    useEffect(() => {
-        let rafId;
+        // CAMBIO CLAVE 3: Asegurarse de que el progreso de la animación no pase de 1.
+        // Esto "congela" la animación en su estado final durante el último 'hold'.
+        const clampedAnimationProgress = Math.min(1, animationProgress);
 
-        // Pre-promoción de capas
-        slideRefs.current.forEach(node => {
-            if (node) node.style.willChange = 'opacity, filter';
+        const overallProg = clampedAnimationProgress * animCount;
+        const chapterIdx = Math.floor(overallProg);
+        const within = overallProg - chapterIdx;
+
+        const holdRatioInChapter = holdVh / chapterVh;
+        const transRatioInChapter = transitionVh / chapterVh;
+
+        let animProg = 0;
+        if (within > holdRatioInChapter && transRatioInChapter > 0) {
+            animProg = (within - holdRatioInChapter) / transRatioInChapter;
+        }
+
+        const visualProg = chapterIdx + animProg;
+
+        // Aplicar estilos a cada slide (sin cambios aquí)
+        slideRefs.current.forEach((node, idx) => {
+            if (!node) return;
+            node.style.willChange = 'opacity, filter';
+
+            const slideProg = visualProg - idx;
+            const opacity = Math.max(0, 1 - Math.abs(slideProg));
+            const blur = Math.min(maxBlur, Math.abs(slideProg) * maxBlur);
+
+            node.style.opacity = opacity.toFixed(3);
+            node.style.filter = `blur(${blur.toFixed(2)}px)`;
+            node.style.visibility = opacity > 0.001 ? 'visible' : 'hidden';
         });
 
-        const handleScroll = () => {
-            if (!placeholderRef.current) return;
-            if (rafId) cancelAnimationFrame(rafId);
-
-            rafId = requestAnimationFrame(() => {
-                const { top } = placeholderRef.current.getBoundingClientRect();
-                const viewportH = window.innerHeight;
-                const maxScroll = containerHeight - viewportH;
-                const scrollDelta = -Math.min(0, top);
-                const scrollProg = maxScroll > 0 ? Math.min(1, Math.max(0, scrollDelta / maxScroll)) : 0;
-
-                // Cálculo de progreso visual
-                const overallProg = scrollProg * animCount;
-                const chapterIdx = Math.floor(overallProg);
-                const within = overallProg - chapterIdx;
-                const holdRatioInChapter = holdVh / chapterVh;
-                const transRatioInChapter = transitionVh / chapterVh;
-                let animProg = 0;
-                if (within > holdRatioInChapter && transRatioInChapter > 0) {
-                    animProg = (within - holdRatioInChapter) / transRatioInChapter;
-                }
-                const visualProg = chapterIdx + animProg;
-
-                // Aplicar estilos a cada slide
-                slideRefs.current.forEach((node, idx) => {
-                    if (!node) return;
-                    const slideProg = visualProg - idx;
-                    const opacity = Math.max(0, 1 - Math.abs(slideProg));
-                    const blur = Math.min(maxBlur, Math.abs(slideProg) * maxBlur);
-                    node.style.opacity = opacity;
-                    node.style.filter = `blur(${blur}px)`;
-                    node.style.visibility = opacity > 0 ? 'visible' : 'hidden';
-                });
-            });
-        };
-
-        handleScroll();
-        window.addEventListener('scroll', handleScroll, { passive: true });
-        window.addEventListener('resize', handleScroll, { passive: true });
-        return () => {
-            window.removeEventListener('scroll', handleScroll);
-            window.removeEventListener('resize', handleScroll);
-            if (rafId) cancelAnimationFrame(rafId);
-        };
-    }, [animCount, containerHeight, transitionVh, holdVh, chapterVh, maxBlur]);
+    }, [scrollProgress, animCount, chapterVh, holdVh, transitionVh, maxBlur, animationVh, totalDurationInVh]);
 
     if (!images || images.length === 0) return null;
 
+    // El JSX no cambia
     return (
         <div
             ref={placeholderRef}
