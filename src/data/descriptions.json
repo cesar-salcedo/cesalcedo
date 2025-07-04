@@ -1,0 +1,44 @@
+{
+    "portfolio": {
+        "elephant": {
+            "title": "African Elephant",
+            "descriptionA": "Game-ready 3D model with 8K PBR textures, clean UVs, and a fully rigged skeleton with IK/FK chains. Balanced for real-time performance and visual fidelity across VR, AR, games, and cinematics.",
+            "descriptionB": "Blender, 3dsMax and Three.js, + 50 sales.",
+            "alt": "Elephant GIF"
+        },
+        "mouth": {
+            "title": "Human Mouth",
+            "descriptionA": "Optimized for close-up rendering and facial animation. Features 8K textures, 16-bit displacement maps, and full compatibility with Cycles and V-Ray. Includes original modeling, UV layout, shading and rigging.",
+            "descriptionB": "Blender and Autodesk 3dsMax, + 300 sales.",
+            "alt": "Mouth gallery"
+        },
+        "solarSystem": {
+            "title": "Solar System Collection",
+            "descriptionA": "Highly accurate planetary models. Venus, Uranus, Neptune, and part of Saturn are hand-painted. The Sun is fully procedural. All planets include 16K to 23K PBR textures in equirectangular format.",
+            "descriptionB": "Unity, Blender, 3dsMax. Used by Ubisoft. +300 sales.",
+            "alt": "Solar System cover"
+        },
+        "eye": {
+            "title": "Eyes generator",
+            "descriptionA": "A fully procedural eye generator that creates infinite variations of iris and sclera patterns. Includes node-based materials, UV-ready exports, and a demo file for instant use.",
+            "descriptionB": "Blender Addon. +300 sales.",
+            "alt": "Eye Generator gallery"
+        },
+        "gasPlanets": {
+            "title": "Simulated Planets",
+            "descriptionA": "A fluid dynamics-based simulation system designed to generate realistic gas planets. Especially useful where procedural methods fall short, this generator creates high-fidelity visuals limited only by computing power.",
+            "descriptionB": "Python, OpenGL, GLSL shaders",
+            "alt": "Gas Planets Gallery"
+        },
+        "terrain": {
+            "title": "Procedural Terrain",
+            "descriptionA": "A collection of high-detail procedural rock formations, suitable for cliffs, crags, and steep rocky environments. Fully generated in Blender with unlimited resolution scalability. Turn any shape into terrain.",
+            "descriptionB": "Blender nodes, procedural, versatile addon.",
+            "alt": "Procedural terrain sequence"
+        }
+    },
+    "about": {
+        "descriptionA": "I'm César Salcedo,",
+        "descriptionB": "a Technical Artist with over 10 years of experience and a passion for solving complex technical puzzles. My principle is simple: I don't just create 3D art; I design and build the procedural systems that generate it. I have validated this focus on creating efficient and scalable tools by building a successful 3D asset business, generating over $200,000 in revenue. I am now looking to apply this systems-thinking approach and my problem-solving skills in a team environment, contributing to large-scale projects."
+    }
+}

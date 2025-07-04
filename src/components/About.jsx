@@ -3,7 +3,11 @@ import React from "react";
 import ImageZoomProgressive from "./utils/ImageZoomProgressive";
 import img1 from '../assets/images/profile_photo_03.jpg';
 
+import descriptions from '../data/descriptions.json'
+
 export default function About() {
+    const descriptionA = descriptions.about.descriptionA
+    const descriptionB = descriptions.about.descriptionB
     return (
         <section
             id="about"
@@ -25,13 +29,8 @@ export default function About() {
             >
                 <ImageZoomProgressive src={img1} maxScale={1.1} />
                 <br />
-                <p> I'm César Salcedo,</p>
-                <p>
-                    a Technical Artist with over 10 years of experience and a passion for solving complex technical puzzles.
-                    My principle is simple: I don't just create 3D art; I design and build the procedural systems that generate it.
-                    I have validated this focus on creating efficient and scalable tools by building a successful 3D asset business, generating over $200,000 in revenue.
-                    I am now looking to apply this systems-thinking approach and my problem-solving skills in a team environment, contributing to large-scale projects.
-                </p>
+                <p> {descriptionA},</p>
+                <p> {descriptionB} </p>
 
 
 

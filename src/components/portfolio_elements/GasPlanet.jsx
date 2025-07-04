@@ -1,10 +1,12 @@
 import React from 'react';
-import Description from '../utils/DescriptionA.jsx';
+import DescriptionTypeA from '../utils/DescriptionTypeA.jsx';
 
-//import DefocusScrollGallery from '../utils/DefocusScrollGallery.jsx';//
+
 import VerticalScrollGallery from '../utils/VerticalScrollGallery.jsx';
-//import HorizontalScrollGalley from '../utils/HorizontalScrollCallery.jsx';
 
+import descriptions from '../../data/descriptions.json'
+
+import useIsDesktop from '../hooks/useIsDesktop.js';
 
 import img1 from '../../assets/images/gas_planet_01.jpg';
 import img2 from '../../assets/images/gas_planet_02.jpg';
@@ -16,14 +18,9 @@ import img6 from '../../assets/images/gas_planet_06.jpg';
 
 
 
-export default function Mouth({
+export default function GasPlanet() {
 
-    isDesktop = false
-}) {
-    const title = "Planet Generator";
-    const description = "A fluid dynamics-based simulation system designed to generate realistic gas planets. Especially useful where procedural methods fall short, this generator creates high-fidelity visuals limited only by computing power. ";
-
-
+    const planetDescription = descriptions.portfolio.gasPlanets
     const imagesA = [img1, img2, img3, img4, img5, img6]
 
 
@@ -31,14 +28,15 @@ export default function Mouth({
         <div style={{
             marginTop: "32px"
         }}>
-            <Description
-                title={title}
-                description={description}
+            <DescriptionTypeA
+                title={planetDescription.title}
+                description={planetDescription.descriptionA}
+                profit={planetDescription.descriptionB}
 
             />
             <VerticalScrollGallery
                 scrollVelocity={1.0}
-                isDesktop={isDesktop}
+                isDesktop={useIsDesktop()}
                 images={imagesA}
             />
 

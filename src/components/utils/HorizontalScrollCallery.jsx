@@ -14,8 +14,6 @@ const HorizontalScrollGallery = ({ images, scrollVelocity = 1, isDesktop = false
         durationInVh: durationInVh,
     });
 
-    // --- Toda la lógica manual de scroll y altura ha sido eliminada. ---
-
 
     // --- RENDERIZADO (Sin cambios en la lógica de animación) ---
     if (!images?.length) return null;

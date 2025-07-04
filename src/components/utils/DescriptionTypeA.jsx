@@ -2,7 +2,7 @@ import React from "react";
 import PropTypes from "prop-types";
 import styles from "./DescriptionA.module.css";
 
-export default function Description({
+export default function DescriptionTypeA({
     title,
     description,
     profit,
@@ -20,7 +20,7 @@ export default function Description({
     );
 }
 
-Description.propTypes = {
+DescriptionTypeA.propTypes = {
     title: PropTypes.string.isRequired,
     description: PropTypes.string.isRequired,
     profit: PropTypes.string,
