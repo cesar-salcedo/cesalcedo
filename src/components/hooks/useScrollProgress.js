@@ -7,35 +7,45 @@ import { useState, useEffect, useCallback, useRef } from 'react';
  * @param {React.RefObject<HTMLElement>} containerRef - Ref al contenedor observado.
  * @param {object} options
  * @param {number} options.durationInVh - Duración del "scroll falso" en múltiplos de viewport height.
+ * @param {number} options.resizeThreshold - Fracción del viewport height mínima para recálculo en resize (default 0.1).
  */
-export const useScrollProgress = (containerRef, { durationInVh = 1 } = {}) => {
+export const useScrollProgress = (
+    containerRef,
+    { durationInVh = 1, resizeThreshold = 0.1 } = {}
+) => {
     const [scrollProgress, setScrollProgress] = useState(0);
     const [containerHeight, setContainerHeight] = useState(0);
 
-    // Refs para evitar dependencias y renders
     const isIntersecting = useRef(false);
     const scrollSpace = useRef(0);
     const rAFId = useRef(null);
     const lastProgress = useRef(0);
+    const lastVh = useRef(0);
 
-    // Calcula scrollSpace y altura
+    // Calcula scrollSpace y altura, pero ignora cambios menores en vh (UI chrome hide/show)
     const updateScrollSpace = useCallback(() => {
         const vh = window.innerHeight;
+        const thresholdPx = vh * resizeThreshold;
+        if (lastVh.current && Math.abs(vh - lastVh.current) < thresholdPx) {
+            // cambio menor: ignorar
+            return;
+        }
+        lastVh.current = vh;
+
         const totalScroll = vh * durationInVh;
         scrollSpace.current = totalScroll;
 
         const newHeight = totalScroll + vh;
         setContainerHeight(prev => (prev !== newHeight ? newHeight : prev));
-    }, [durationInVh]);
+    }, [durationInVh, resizeThreshold]);
 
-    // Inicial y al cambiar tamaño de viewport
+    // Inicial y al cambiar tamaño estatutariamente
     useEffect(() => {
         updateScrollSpace();
         window.addEventListener('resize', updateScrollSpace);
         return () => window.removeEventListener('resize', updateScrollSpace);
     }, [updateScrollSpace]);
 
-    // Handler de scroll: throttle con requestAnimationFrame y setState final
     const handleScroll = useCallback(() => {
         if (!isIntersecting.current || !containerRef.current) return;
         if (rAFId.current) cancelAnimationFrame(rAFId.current);
@@ -43,7 +53,7 @@ export const useScrollProgress = (containerRef, { durationInVh = 1 } = {}) => {
         rAFId.current = requestAnimationFrame(() => {
             const { top } = containerRef.current.getBoundingClientRect();
             const space = scrollSpace.current;
-            const raw = space > 0 ? -top / space : (top < 0 ? 1 : 0);
+            const raw = space > 0 ? -top / space : top < 0 ? 1 : 0;
             const progress = Math.min(Math.max(raw, 0), 1);
 
             const delta = Math.abs(progress - lastProgress.current);
@@ -56,10 +66,9 @@ export const useScrollProgress = (containerRef, { durationInVh = 1 } = {}) => {
         });
     }, [containerRef]);
 
-    // Efecto scroll listener
+    // Listener de scroll
     useEffect(() => {
         window.addEventListener('scroll', handleScroll, { passive: true });
-        // Lectura inicial por si ya está scrolleado
         handleScroll();
         return () => {
             window.removeEventListener('scroll', handleScroll);
@@ -67,7 +76,7 @@ export const useScrollProgress = (containerRef, { durationInVh = 1 } = {}) => {
         };
     }, [handleScroll]);
 
-    // IntersectionObserver para controlar lectura y flush final solo cuando se sale por abajo
+    // IntersectionObserver con flush final condicionado
     useEffect(() => {
         const container = containerRef.current;
         if (!container) return;
@@ -76,13 +85,10 @@ export const useScrollProgress = (containerRef, { durationInVh = 1 } = {}) => {
             ([entry]) => {
                 isIntersecting.current = entry.isIntersecting;
                 if (entry.isIntersecting) {
-                    handleScroll(); // lectura inmediata al entrar
-                } else {
-                    // Solo forzar progreso final si se ha scrolleado más allá del final (parte superior fuera de viewport)
-                    if (entry.boundingClientRect.top < 0) {
-                        lastProgress.current = 1;
-                        setScrollProgress(1);
-                    }
+                    handleScroll();
+                } else if (entry.boundingClientRect.top < 0) {
+                    lastProgress.current = 1;
+                    setScrollProgress(1);
                 }
             },
             { threshold: 0 }
