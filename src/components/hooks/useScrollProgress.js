@@ -1,4 +1,3 @@
-// hooks/useScrollProgress.js
 import { useState, useEffect, useCallback, useRef } from 'react';
 
 /**
@@ -68,7 +67,7 @@ export const useScrollProgress = (containerRef, { durationInVh = 1 } = {}) => {
         };
     }, [handleScroll]);
 
-    // IntersectionObserver para controlar lectura y flush final
+    // IntersectionObserver para controlar lectura y flush final solo cuando se sale por abajo
     useEffect(() => {
         const container = containerRef.current;
         if (!container) return;
@@ -79,9 +78,11 @@ export const useScrollProgress = (containerRef, { durationInVh = 1 } = {}) => {
                 if (entry.isIntersecting) {
                     handleScroll(); // lectura inmediata al entrar
                 } else {
-                    // Force progreso final al salir de vista
-                    lastProgress.current = 1;
-                    setScrollProgress(1);
+                    // Solo forzar progreso final si se ha scrolleado más allá del final (parte superior fuera de viewport)
+                    if (entry.boundingClientRect.top < 0) {
+                        lastProgress.current = 1;
+                        setScrollProgress(1);
+                    }
                 }
             },
             { threshold: 0 }
