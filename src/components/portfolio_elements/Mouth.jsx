@@ -26,8 +26,7 @@ export default function Mouth() {
             />
             <GuillotineScrollGallery
                 images={imagesB}
-                scrollVelocity={3}
-
+                scrollVelocity={2.5}
             />
         </div>
     );

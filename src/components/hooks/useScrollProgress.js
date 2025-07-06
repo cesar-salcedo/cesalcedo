@@ -18,28 +18,25 @@ export const useScrollProgress = (containerRef, { durationInVh = 1 } = {}) => {
     const scrollSpace = useRef(0);
     const rAFId = useRef(null);
     const lastProgress = useRef(0);
-    // const resizeScheduled = useRef(false); // Eliminado
 
-    // Calcula scrollSpace y altura. Ahora solo se recalcula si durationInVh cambia.
+    // Calcula scrollSpace y altura
     const updateScrollSpace = useCallback(() => {
         const vh = window.innerHeight;
         const totalScroll = vh * durationInVh;
         scrollSpace.current = totalScroll;
 
         const newHeight = totalScroll + vh;
-        // La comparación en setContainerHeight ya previene renders innecesarios
         setContainerHeight(prev => (prev !== newHeight ? newHeight : prev));
-
     }, [durationInVh]);
 
-    // Eliminado el useEffect que escuchaba el evento 'resize'.
-
-    // Este useEffect ahora solo se encarga de calcular el espacio una vez.
+    // Inicial y al cambiar tamaño de viewport
     useEffect(() => {
         updateScrollSpace();
+        window.addEventListener('resize', updateScrollSpace);
+        return () => window.removeEventListener('resize', updateScrollSpace);
     }, [updateScrollSpace]);
 
-    // Handler de scroll: throttle con requestAnimationFrame y sólo setState si cambia
+    // Handler de scroll: throttle con requestAnimationFrame y setState final
     const handleScroll = useCallback(() => {
         if (!isIntersecting.current || !containerRef.current) return;
         if (rAFId.current) cancelAnimationFrame(rAFId.current);
@@ -50,23 +47,28 @@ export const useScrollProgress = (containerRef, { durationInVh = 1 } = {}) => {
             const raw = space > 0 ? -top / space : (top < 0 ? 1 : 0);
             const progress = Math.min(Math.max(raw, 0), 1);
 
-            // Umbral pequeño para evitar micro‐renders
-            if (Math.abs(progress - lastProgress.current) > 0.001) {
+            const delta = Math.abs(progress - lastProgress.current);
+            const isFinalStep = progress >= 1 && lastProgress.current < 1;
+
+            if (isFinalStep || delta > 0.001) {
                 lastProgress.current = progress;
                 setScrollProgress(progress);
             }
         });
-    }, [containerRef]); // La dependencia de containerRef es suficiente aquí
+    }, [containerRef]);
 
+    // Efecto scroll listener
     useEffect(() => {
         window.addEventListener('scroll', handleScroll, { passive: true });
+        // Lectura inicial por si ya está scrolleado
+        handleScroll();
         return () => {
             window.removeEventListener('scroll', handleScroll);
             if (rAFId.current) cancelAnimationFrame(rAFId.current);
         };
     }, [handleScroll]);
 
-    // IntersectionObserver para habilitar/deshabilitar el scroll handler
+    // IntersectionObserver para controlar lectura y flush final
     useEffect(() => {
         const container = containerRef.current;
         if (!container) return;
@@ -74,15 +76,20 @@ export const useScrollProgress = (containerRef, { durationInVh = 1 } = {}) => {
         const observer = new IntersectionObserver(
             ([entry]) => {
                 isIntersecting.current = entry.isIntersecting;
+                if (entry.isIntersecting) {
+                    handleScroll(); // lectura inmediata al entrar
+                } else {
+                    // Force progreso final al salir de vista
+                    lastProgress.current = 1;
+                    setScrollProgress(1);
+                }
             },
             { threshold: 0 }
         );
-        observer.observe(container);
 
-        return () => {
-            observer.disconnect();
-        };
-    }, [containerRef]);
+        observer.observe(container);
+        return () => observer.disconnect();
+    }, [containerRef, handleScroll]);
 
     return { scrollProgress, containerHeight };
 };
