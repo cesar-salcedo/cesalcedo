@@ -29,7 +29,7 @@ export default function About() {
             >
                 <ImageZoomProgressive src={img1} maxScale={1.1} />
                 <br />
-                <p> {descriptionA},</p>
+                <p> {descriptionA}</p>
                 <p> {descriptionB} </p>
 
 
