@@ -21,11 +21,11 @@ export default function Contact() {
             id="contact"
             style={{
                 padding: "96px 20px",
-                backgroundColor: "#ffffff"
+                backgroundColor: "var(--color-surface)"
             }}
         >
             <h2 style={{ textAlign: "center" }}>Say hello!</h2>
-            <hr style={{ width: "100%", border: "none", borderTop: "1px solid #ccc" }} />
+            <hr style={{ width: "100%", border: "none", borderTop: "1px solid var(--color-border)" }} />
 
             <form
                 onSubmit={handleSubmit}
@@ -46,7 +46,7 @@ export default function Contact() {
                     style={{
                         padding: "8px",
                         fontSize: "16px",
-                        border: "1px solid #ccc",
+                        border: "1px solid var(--color-border)",
                         borderRadius: "4px"
                     }}
                 />
@@ -59,7 +59,7 @@ export default function Contact() {
                     style={{
                         padding: "8px",
                         fontSize: "16px",
-                        border: "1px solid #ccc",
+                        border: "1px solid var(--color-border)",
                         borderRadius: "4px"
                     }}
                 />
@@ -72,7 +72,7 @@ export default function Contact() {
                     style={{
                         padding: "8px",
                         fontSize: "16px",
-                        border: "1px solid #ccc",
+                        border: "1px solid var(--color-border)",
                         borderRadius: "4px"
                     }}
                 ></textarea>
@@ -81,8 +81,8 @@ export default function Contact() {
                     style={{
                         padding: "10px",
                         fontSize: "16px",
-                        backgroundColor: "#333",
-                        color: "#fff",
+                        backgroundColor: "var(--color-button)",
+                        color: "var(--color-button-text)",
                         border: "none",
                         borderRadius: "4px",
                         cursor: "pointer"
@@ -91,9 +91,9 @@ export default function Contact() {
                     Send
                 </button>
             </form>
-            <p style={{ textAlign: "center", marginTop: "20px", color: "#555" }}>
+            <p style={{ textAlign: "center", marginTop: "20px", color: "var(--color-muted)" }}>
                 Or write me directly at{" "}
-                <a href="mailto:cesarsalcedogarcia@gmail.com" style={{ color: "#0066cc" }}>
+                <a href="mailto:cesarsalcedogarcia@gmail.com" style={{ color: "var(--color-link)" }}>
                     cesarsalcedogarcia@gmail.com
                 </a>
             </p>

@@ -25,7 +25,7 @@ export default function Portfolio() {
     return (
         <section id="portfolio" style={{ marginTop: "32px" }}>
             <h2 style={{ textAlign: "center" }}>Portfolio</h2>
-            <hr style={{ width: "100%", border: "none", borderTop: "1px solid #ccc" }} />
+            <hr style={{ width: "100%", border: "none", borderTop: "1px solid var(--color-border)" }} />
 
             {portfolioItems.map(({ Component }, index) => (
                 <Component key={index} />

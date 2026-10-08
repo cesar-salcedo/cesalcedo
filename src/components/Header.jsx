@@ -26,8 +26,8 @@ export default function Header() {
 
 
         padding: "16px 16px",
-        backgroundColor: "#fff",
-        borderBottom: "1px solid #e0e0e0",
+        backgroundColor: "var(--color-surface)",
+        borderBottom: "1px solid var(--color-border-subtle)",
         width: "100%",
         zIndex: 1000,
     };
@@ -36,7 +36,7 @@ export default function Header() {
         fontFamily: "'Montserrat', sans-serif",
         fontSize: "1.7rem",
         fontWeight: 700,
-        color: "#333",
+        color: "var(--color-text)",
         textDecoration: "none",
     };
 
@@ -51,9 +51,9 @@ export default function Header() {
         position: "absolute",
         top: "100%",
         right: 0,
-        backgroundColor: "#fff",
+        backgroundColor: "var(--color-surface)",
         width: "100%",
-        boxShadow: "0 4px 8px rgba(0,0,0,0.1)",
+        boxShadow: "var(--menu-shadow)",
         display: "flex",
         flexDirection: "column",
         alignItems: "center",
@@ -63,7 +63,7 @@ export default function Header() {
     const linkStyle = {
         fontFamily: "'Open Sans', sans-serif",
         fontSize: "1rem",
-        color: "#555",
+        color: "var(--color-muted)",
         textDecoration: "none",
         padding: "8px 16px",
         width: "100%",
@@ -74,6 +74,7 @@ export default function Header() {
     const buttonStyle = {
         marginLeft: "auto",
         background: "none",
+        color: "var(--color-text)",
         border: "none",
         fontSize: "1.8rem",
         cursor: "pointer",
@@ -106,8 +107,8 @@ export default function Header() {
                             key={href}
                             href={href}
                             style={linkStyle}
-                            onMouseEnter={(e) => (e.currentTarget.style.color = "#000")}
-                            onMouseLeave={(e) => (e.currentTarget.style.color = "#555")}
+                            onMouseEnter={(e) => (e.currentTarget.style.color = "var(--color-text)")}
+                            onMouseLeave={(e) => (e.currentTarget.style.color = "var(--color-muted)")}
                         >
                             {label}
                         </a>
@@ -123,7 +124,7 @@ export default function Header() {
                             href={href}
                             style={linkStyle}
                             onClick={() => setMenuOpen(false)}     // cierra al clickar
-                            onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = "#f0f0f0")}
+                            onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = "var(--color-hover)")}
                             onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = "transparent")}
                         >
                             {label}

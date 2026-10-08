@@ -24,7 +24,7 @@ function App() {
         display: "flex",
         flexDirection: "column",
         fontFamily: "Arial, sans-serif",
-        color: "#355",
+        color: "var(--color-heading)",
         boxSizing: "border-box",
       }}>
 
